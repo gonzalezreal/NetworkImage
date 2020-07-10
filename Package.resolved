@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "combine-schedulers",
+        "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
+        "state": {
+          "branch": null,
+          "revision": "ff42ec9061d864de7982162011321d3df5080c10",
+          "version": "0.1.2"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
