@@ -23,7 +23,7 @@
 
 import Foundation
 
-internal enum NetworkImageError: Error, Equatable {
+public enum NetworkImageError: Error, Equatable {
     case badStatus(Int)
     case invalidData(Data)
 }

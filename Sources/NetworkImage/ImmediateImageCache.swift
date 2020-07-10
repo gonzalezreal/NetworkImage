@@ -24,14 +24,14 @@
 #if canImport(UIKit)
     import UIKit
 
-    internal final class ImmediateImageCache: ImageCache {
+    public final class ImmediateImageCache: ImageCache {
         private let cache = NSCache<NSURL, UIImage>()
 
-        func image(for url: URL) -> UIImage? {
+        public func image(for url: URL) -> UIImage? {
             cache.object(forKey: url as NSURL)
         }
 
-        func setImage(_ image: UIImage, for url: URL) {
+        public func setImage(_ image: UIImage, for url: URL) {
             cache.setObject(image, forKey: url as NSURL)
         }
     }

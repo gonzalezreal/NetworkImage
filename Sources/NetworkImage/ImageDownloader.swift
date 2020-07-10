@@ -27,16 +27,21 @@
     import UIKit
 
     @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    internal final class ImageDownloader {
+    public final class ImageDownloader {
         private let session: URLSession
         private let imageCache: ImageCache
+        
+        public static let shared = ImageDownloader(
+            session: .imageLoading,
+            imageCache: ImmediateImageCache()
+        )
 
-        init(session: URLSession, imageCache: ImageCache) {
+        public init(session: URLSession, imageCache: ImageCache) {
             self.session = session
             self.imageCache = imageCache
         }
 
-        func image(for url: URL) -> AnyPublisher<UIImage, Error> {
+        public func image(for url: URL) -> AnyPublisher<UIImage, Error> {
             if let image = imageCache.image(for: url) {
                 return Just(image)
                     .setFailureType(to: Error.self)
@@ -58,13 +63,5 @@
                     .eraseToAnyPublisher()
             }
         }
-    }
-
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    internal extension ImageDownloader {
-        static let shared = ImageDownloader(
-            session: .imageLoading,
-            imageCache: ImmediateImageCache()
-        )
     }
 #endif

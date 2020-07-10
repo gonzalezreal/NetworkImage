@@ -23,7 +23,7 @@
 
 import Foundation
 
-internal extension URLSession {
+extension URLSession {
     private enum Constants {
         static let memoryCapacity = 10 * 1024 * 1024
         static let diskCapacity = 100 * 1024 * 1024
@@ -31,7 +31,7 @@ internal extension URLSession {
     }
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    static var imageLoading: URLSession {
+    public static var imageLoading: URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.requestCachePolicy = .returnCacheDataElseLoad
         configuration.urlCache = URLCache(

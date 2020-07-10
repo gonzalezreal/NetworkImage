@@ -25,7 +25,7 @@
     import Foundation
     import UIKit
 
-    internal protocol ImageCache: AnyObject {
+    public protocol ImageCache: AnyObject {
         func image(for url: URL) -> UIImage?
         func setImage(_ image: UIImage, for url: URL)
     }
