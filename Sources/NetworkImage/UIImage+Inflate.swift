@@ -1,5 +1,5 @@
 //
-// NetworkImageTests.swift
+// UIImage+Inflate.swift
 //
 // Copyright (c) 2020 Guille Gonzalez
 //
@@ -21,18 +21,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-@testable import NetworkImage
-import XCTest
+#if canImport(UIKit)
+    import UIKit
 
-final class NetworkImageTests: XCTestCase {
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(NetworkImage().text, "Hello, World!")
+    #if os(watchOS)
+        import WatchKit
+    #endif
+
+    internal extension UIImage {
+        static func inflating(_ data: Data) throws -> UIImage {
+            guard let image = UIImage(data: data, scale: screenScale()) else {
+                throw NetworkImageError.invalidData(data)
+            }
+
+            // Inflates the underlying compressed image data to be backed by an uncompressed bitmap representation.
+            _ = image.cgImage?.dataProvider?.data
+
+            return image
+        }
     }
 
-    static var allTests = [
-        ("testExample", testExample),
-    ]
-}
+    private func screenScale() -> CGFloat {
+        #if os(watchOS)
+            return WKInterfaceDevice.current().screenScale
+        #else
+            return UIScreen.main.scale
+        #endif
+    }
+#endif
