@@ -44,7 +44,7 @@ class MovieItemCell: UICollectionViewCell {
     
     func configure(with movieItem: MovieItem) {
         // ...
-        cancellable = imageDownloader.shared.image(for: movieItem.posterURL)
+        cancellable = ImageDownloader.shared.image(for: movieItem.posterURL)
             .map { $0.applySomeFancyEffect() }
             .replaceError(with: Image(systemName: "film")!)
             .receive(on: DispatchQueue.main)
