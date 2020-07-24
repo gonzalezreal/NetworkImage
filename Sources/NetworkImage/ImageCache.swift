@@ -21,12 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit)
-    import Foundation
-    import UIKit
+import Foundation
 
-    public protocol ImageCache: AnyObject {
-        func image(for url: URL) -> UIImage?
-        func setImage(_ image: UIImage, for url: URL)
-    }
-#endif
+public protocol ImageCache: AnyObject {
+    func image(for url: URL) -> Image?
+    func setImage(_ image: Image, for url: URL)
+}

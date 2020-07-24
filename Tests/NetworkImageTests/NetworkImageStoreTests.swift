@@ -21,21 +21,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit) && canImport(Combine)
+#if canImport(Combine)
     import Combine
     import CombineSchedulers
-    import UIKit
     import XCTest
 
     @testable import NetworkImage
 
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     final class NetworkImageStoreTests: XCTestCase {
         enum Fixtures {
             static let anyError = NetworkImageError.badStatus(500)
             static let anyURL = URL(string: "https://example.com/anyImage.jpg")!
             static let anyOtherURL = URL(string: "https://example.com/anyOtherImage.jpg")!
-            static let anyImage = UIImage()
+            static let anyImage = Image()
         }
 
         private let scheduler = DispatchQueue.testScheduler
@@ -174,7 +173,7 @@
 
     @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private extension NetworkImageStoreTests {
-        var successfulImage: (URL?) -> AnyPublisher<UIImage, Error> {
+        var successfulImage: (URL?) -> AnyPublisher<Image, Error> {
             { _ in
                 Just(Fixtures.anyImage)
                     .delay(for: .seconds(1), scheduler: self.scheduler)
@@ -183,7 +182,7 @@
             }
         }
 
-        var failedImage: (URL?) -> AnyPublisher<UIImage, Error> {
+        var failedImage: (URL?) -> AnyPublisher<Image, Error> {
             { _ in
                 Fail(error: Fixtures.anyError)
                     .delay(for: .seconds(1), scheduler: self.scheduler)

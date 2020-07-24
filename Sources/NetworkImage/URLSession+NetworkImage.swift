@@ -1,5 +1,5 @@
 //
-// URLSession+Image.swift
+// URLSession+NetworkImage.swift
 //
 // Copyright (c) 2020 Guille Gonzalez
 //
