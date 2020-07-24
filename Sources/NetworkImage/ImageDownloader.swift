@@ -21,16 +21,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit) && canImport(Combine)
+#if canImport(Combine)
     import Combine
     import Foundation
-    import UIKit
 
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public final class ImageDownloader {
         private let session: URLSession
         private let imageCache: ImageCache
-        
+
         public static let shared = ImageDownloader(
             session: .imageLoading,
             imageCache: ImmediateImageCache()
@@ -41,7 +40,7 @@
             self.imageCache = imageCache
         }
 
-        public func image(for url: URL) -> AnyPublisher<UIImage, Error> {
+        public func image(for url: URL) -> AnyPublisher<Image, Error> {
             if let image = imageCache.image(for: url) {
                 return Just(image)
                     .setFailureType(to: Error.self)
@@ -55,7 +54,7 @@
                             }
                         }
 
-                        let image = try UIImage.inflating(data)
+                        let image = try decodeImage(from: data)
                         imageCache.setImage(image, for: url)
 
                         return image

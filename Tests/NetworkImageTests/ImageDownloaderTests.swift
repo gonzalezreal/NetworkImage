@@ -21,14 +21,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit) && canImport(Combine)
+#if canImport(Combine)
     import Combine
-    import UIKit
     import XCTest
 
     import NetworkImage
 
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     final class ImageDownloaderTests: XCTestCase {
         enum Fixtures {
             static let anyImageURL = URL(string: "https://example.com/dot.png")!
@@ -55,7 +54,7 @@
             // given
             givenAnyImageResponse()
             let didReceiveValue = expectation(description: "didReceiveValue")
-            var result: UIImage?
+            var result: Image?
 
             // when
             sut.image(for: Fixtures.anyImageURL)
@@ -122,7 +121,7 @@
         func testAnyDataImageURLReturnsImage() {
             // given
             let didReceiveValue = expectation(description: "didReceiveValue")
-            var result: UIImage?
+            var result: Image?
 
             // when
             sut.image(for: Fixtures.anyDataImageURL)
@@ -139,14 +138,11 @@
         }
     }
 
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private extension ImageDownloaderTests {
         class DisabledImageCache: ImageCache {
-            func image(for _: URL) -> UIImage? {
-                nil
-            }
-
-            func setImage(_: UIImage, for _: URL) {}
+            func image(for _: URL) -> Image? { nil }
+            func setImage(_: Image, for _: URL) {}
         }
 
         func givenAnyImageResponse() {

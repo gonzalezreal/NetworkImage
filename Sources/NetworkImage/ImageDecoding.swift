@@ -1,5 +1,5 @@
 //
-// UIImage+Inflate.swift
+// ImageDecoding.swift
 //
 // Copyright (c) 2020 Guille Gonzalez
 //
@@ -21,25 +21,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit)
+#if os(iOS) || os(tvOS) || os(watchOS)
     import UIKit
 
     #if os(watchOS)
         import WatchKit
     #endif
 
-    internal extension UIImage {
-        static func inflating(_ data: Data) throws -> UIImage {
-            guard let image = UIImage(data: data, scale: screenScale()) else {
-                throw NetworkImageError.invalidData(data)
-            }
-
-            // Inflates the underlying compressed image data to be backed by an uncompressed bitmap representation.
-            _ = image.cgImage?.dataProvider?.data
-
-            return image
-        }
-    }
+    public typealias Image = UIImage
 
     private func screenScale() -> CGFloat {
         #if os(watchOS)
@@ -47,5 +36,37 @@
         #else
             return UIScreen.main.scale
         #endif
+    }
+
+    internal func decodeImage(from data: Data) throws -> UIImage {
+        guard let image = UIImage(data: data, scale: screenScale()) else {
+            throw NetworkImageError.invalidData(data)
+        }
+
+        // Inflates the underlying compressed image data to be backed by an uncompressed bitmap representation.
+        _ = image.cgImage?.dataProvider?.data
+
+        return image
+    }
+
+#elseif os(macOS)
+    import Cocoa
+
+    public typealias Image = NSImage
+
+    internal func decodeImage(from data: Data) throws -> NSImage {
+        guard let bitmapImageRep = NSBitmapImageRep(data: data) else {
+            throw NetworkImageError.invalidData(data)
+        }
+
+        let image = NSImage(
+            size: NSSize(
+                width: bitmapImageRep.pixelsWide,
+                height: bitmapImageRep.pixelsHigh
+            )
+        )
+        image.addRepresentation(bitmapImageRep)
+
+        return image
     }
 #endif

@@ -21,18 +21,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit)
-    import UIKit
+import Foundation
 
-    public final class ImmediateImageCache: ImageCache {
-        private let cache = NSCache<NSURL, UIImage>()
+public final class ImmediateImageCache: ImageCache {
+    private let cache = NSCache<NSURL, Image>()
 
-        public func image(for url: URL) -> UIImage? {
-            cache.object(forKey: url as NSURL)
-        }
-
-        public func setImage(_ image: UIImage, for url: URL) {
-            cache.setObject(image, forKey: url as NSURL)
-        }
+    public func image(for url: URL) -> Image? {
+        cache.object(forKey: url as NSURL)
     }
-#endif
+
+    public func setImage(_ image: Image, for url: URL) {
+        cache.setObject(image, forKey: url as NSURL)
+    }
+}

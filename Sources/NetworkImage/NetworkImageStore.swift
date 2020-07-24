@@ -21,35 +21,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#if canImport(UIKit) && canImport(Combine)
+#if canImport(Combine)
     import Combine
     import CombineSchedulers
     import Foundation
-    import UIKit
 
-    @available(iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     internal final class NetworkImageStore {
         enum State: Equatable {
             case notRequested
             case loading
-            case image(UIImage, elapsedTime: TimeInterval)
+            case image(Image, elapsedTime: TimeInterval)
             case placeholder
         }
 
         enum Action {
             case didSetURL(URL?)
-            case didLoadImage(UIImage, elapsedTime: TimeInterval)
+            case didLoadImage(Image, elapsedTime: TimeInterval)
             case didFail
             case prepareForReuse
         }
 
         struct Environment {
-            let image: (URL) -> AnyPublisher<UIImage, Error>
+            let image: (URL) -> AnyPublisher<Image, Error>
             let currentTime: () -> Double
             let scheduler: AnySchedulerOf<DispatchQueue>
 
             init(
-                image: @escaping (URL) -> AnyPublisher<UIImage, Error> = ImageDownloader.shared.image(for:),
+                image: @escaping (URL) -> AnyPublisher<Image, Error> = ImageDownloader.shared.image(for:),
                 currentTime: @escaping () -> Double = CFAbsoluteTimeGetCurrent,
                 scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.main.eraseToAnyScheduler()
             ) {
