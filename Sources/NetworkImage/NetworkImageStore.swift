@@ -31,24 +31,24 @@
         enum State: Equatable {
             case notRequested
             case loading
-            case image(Image, elapsedTime: TimeInterval)
+            case image(OSImage, elapsedTime: TimeInterval)
             case placeholder
         }
 
         enum Action {
             case didSetURL(URL?)
-            case didLoadImage(Image, elapsedTime: TimeInterval)
+            case didLoadImage(OSImage, elapsedTime: TimeInterval)
             case didFail
             case prepareForReuse
         }
 
         struct Environment {
-            let image: (URL) -> AnyPublisher<Image, Error>
+            let image: (URL) -> AnyPublisher<OSImage, Error>
             let currentTime: () -> Double
             let scheduler: AnySchedulerOf<DispatchQueue>
 
             init(
-                image: @escaping (URL) -> AnyPublisher<Image, Error> = ImageDownloader.shared.image(for:),
+                image: @escaping (URL) -> AnyPublisher<OSImage, Error> = ImageDownloader.shared.image(for:),
                 currentTime: @escaping () -> Double = CFAbsoluteTimeGetCurrent,
                 scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.main.eraseToAnyScheduler()
             ) {

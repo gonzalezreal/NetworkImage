@@ -54,7 +54,7 @@
             // given
             givenAnyImageResponse()
             let didReceiveValue = expectation(description: "didReceiveValue")
-            var result: Image?
+            var result: OSImage?
 
             // when
             sut.image(for: Fixtures.anyImageURL)
@@ -121,7 +121,7 @@
         func testAnyDataImageURLReturnsImage() {
             // given
             let didReceiveValue = expectation(description: "didReceiveValue")
-            var result: Image?
+            var result: OSImage?
 
             // when
             sut.image(for: Fixtures.anyDataImageURL)
@@ -141,8 +141,8 @@
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private extension ImageDownloaderTests {
         class DisabledImageCache: ImageCache {
-            func image(for _: URL) -> Image? { nil }
-            func setImage(_: Image, for _: URL) {}
+            func image(for _: URL) -> OSImage? { nil }
+            func setImage(_: OSImage, for _: URL) {}
         }
 
         func givenAnyImageResponse() {

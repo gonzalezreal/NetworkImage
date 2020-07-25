@@ -40,7 +40,7 @@
             self.imageCache = imageCache
         }
 
-        public func image(for url: URL) -> AnyPublisher<Image, Error> {
+        public func image(for url: URL) -> AnyPublisher<OSImage, Error> {
             if let image = imageCache.image(for: url) {
                 return Just(image)
                     .setFailureType(to: Error.self)
