@@ -1,5 +1,5 @@
 //
-// ImmediateImageCache.swift
+// Image+OSImage.swift
 //
 // Copyright (c) 2020 Guille Gonzalez
 //
@@ -21,16 +21,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import Foundation
+#if canImport(SwiftUI)
 
-public final class ImmediateImageCache: ImageCache {
-    private let cache = NSCache<NSURL, OSImage>()
+    import SwiftUI
 
-    public func image(for url: URL) -> OSImage? {
-        cache.object(forKey: url as NSURL)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public extension Image {
+        init(osImage: OSImage) {
+            #if os(iOS) || os(tvOS) || os(watchOS)
+                self.init(uiImage: osImage)
+            #elseif os(macOS)
+                self.init(nsImage: osImage)
+            #endif
+        }
     }
 
-    public func setImage(_ image: OSImage, for url: URL) {
-        cache.setObject(image, forKey: url as NSURL)
-    }
-}
+#endif

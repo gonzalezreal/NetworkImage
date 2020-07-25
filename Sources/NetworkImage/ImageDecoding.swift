@@ -28,7 +28,7 @@
         import WatchKit
     #endif
 
-    public typealias Image = UIImage
+    public typealias OSImage = UIImage
 
     private func screenScale() -> CGFloat {
         #if os(watchOS)
@@ -52,7 +52,7 @@
 #elseif os(macOS)
     import Cocoa
 
-    public typealias Image = NSImage
+    public typealias OSImage = NSImage
 
     internal func decodeImage(from data: Data) throws -> NSImage {
         guard let bitmapImageRep = NSBitmapImageRep(data: data) else {

@@ -24,6 +24,6 @@
 import Foundation
 
 public protocol ImageCache: AnyObject {
-    func image(for url: URL) -> Image?
-    func setImage(_ image: Image, for url: URL)
+    func image(for url: URL) -> OSImage?
+    func setImage(_ image: OSImage, for url: URL)
 }
