@@ -88,7 +88,7 @@
                             contentMode: .scaleAspectFill,
                             animated: elapsedTime >= Constants.animationThreshold
                         )
-                    case .placeholder:
+                    case .failed:
                         self.imageView.setImage(self.placeholder, contentMode: .center)
                     }
                 }
