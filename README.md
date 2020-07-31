@@ -53,31 +53,27 @@ class MovieItemCell: UICollectionViewCell {
 }
 ```
 
-It is also straightforward to implement a SwiftUI view that displays a remote image, by using the `onReceive` modifier to subscribe to the image(s) emitted by the `ImageDownloader.image(for:)` publisher. 
+It is also straightforward to implement a SwiftUI view that displays a remote image, by using the `NetworkImage` view. 
 
 ```Swift
 struct ContentView: View {
-    @State private var image: UIImage?
-    private let placeholder = UIImage(systemName: "photo")!
-
-    var url = URL(string: "https://image.tmdb.org/t/p/w300/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")!
+    var url = URL(string: "https://image.tmdb.org/t/p/w300/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")
 
     var body: some View {
         ZStack {
             Color(.secondarySystemBackground)
-            image.map {
-                Image(uiImage: $0)
+            NetworkImage(url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+            onError: {
+                Image(systemName: "photo")
+                    .foregroundColor(Color(.systemFill))
             }
         }
-        .onReceive(
-            ImageDownloader.shared.image(for: url)
-                .replaceError(with: placeholder)
-                .receive(on: DispatchQueue.main)
-        ) { image in
-            withAnimation {
-                self.image = image
-            }
-        }
+        .frame(width: 200, height: 300)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }
 ```

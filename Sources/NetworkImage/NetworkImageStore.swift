@@ -32,7 +32,7 @@
             case notRequested
             case loading
             case image(OSImage, elapsedTime: TimeInterval)
-            case placeholder
+            case failed
         }
 
         enum Action {
@@ -70,7 +70,7 @@
         func send(_ action: Action) {
             switch action {
             case .didSetURL(.none):
-                state = .placeholder
+                state = .failed
                 cancellable?.cancel()
             case let .didSetURL(.some(url)):
                 let startTime = environment.currentTime()
@@ -88,7 +88,7 @@
             case let .didLoadImage(image, elapsedTime):
                 state = .image(image, elapsedTime: elapsedTime)
             case .didFail:
-                state = .placeholder
+                state = .failed
             case .prepareForReuse:
                 state = .notRequested
                 cancellable?.cancel()

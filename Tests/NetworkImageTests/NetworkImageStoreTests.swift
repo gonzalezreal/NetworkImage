@@ -69,9 +69,9 @@
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .placeholder,
+                    .failed,
                     .loading,
-                    .placeholder,
+                    .failed,
                 ],
                 result
             )
@@ -133,7 +133,7 @@
                 [
                     .notRequested,
                     .loading,
-                    .placeholder,
+                    .failed,
                 ],
                 result
             )
