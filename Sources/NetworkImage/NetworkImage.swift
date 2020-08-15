@@ -36,40 +36,51 @@
         }
     }
 
-    @available(macOS 11, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public struct NetworkImage<Content: View, Placeholder: View>: View {
-        @StateObject private var store: NetworkImageStore
+        @ObservedObject private var store: NetworkImageStore
 
         private let content: (Image) -> Content
-        private let onError: () -> Placeholder
+        private let error: () -> Placeholder
 
         public init(
-            _ url: URL?,
+            url: URL?,
             content: @escaping (Image) -> Content,
-            onError: @escaping () -> Placeholder
+            error: @escaping () -> Placeholder
         ) {
-            _store = StateObject(wrappedValue: NetworkImageStore(url: url))
+            self.init(
+                store: NetworkImageStore(url: url),
+                content: content,
+                error: error
+            )
+        }
 
+        private init(
+            store: NetworkImageStore,
+            content: @escaping (Image) -> Content,
+            error: @escaping () -> Placeholder
+        ) {
+            self.store = store
             self.content = content
-            self.onError = onError
+            self.error = error
         }
 
         public var body: some View {
             switch store.state {
+            case .notRequested, .loading:
+                EmptyView()
             case let .image(osImage, _):
                 content(Image(osImage: osImage))
             case .failed:
-                onError()
-            default:
-                EmptyView()
+                error()
             }
         }
     }
 
-    @available(macOS 11, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension NetworkImage where Placeholder == EmptyView {
-        public init(_ url: URL?, content: @escaping (Image) -> Content) {
-            self.init(url, content: content, onError: { EmptyView() })
+        public init(url: URL?, content: @escaping (Image) -> Content) {
+            self.init(url: url, content: content, error: { EmptyView() })
         }
     }
 
