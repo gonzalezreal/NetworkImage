@@ -64,7 +64,7 @@
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private struct NetworkImageStyleKey: EnvironmentKey {
-        static let defaultValue: AnyNetworkImageStyle = AnyNetworkImageStyle(DefaultNetworkImageStyle())
+        static let defaultValue = AnyNetworkImageStyle(ResizableNetworkImageStyle())
     }
 
 #endif
