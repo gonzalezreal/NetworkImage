@@ -37,50 +37,22 @@
     }
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public struct NetworkImage<Content: View, Placeholder: View>: View {
+    public struct NetworkImage: View {
+        @Environment(\.networkImageStyle) private var networkImageStyle
         @ObservedObject private var store: NetworkImageStore
 
-        private let content: (Image) -> Content
-        private let error: () -> Placeholder
-
-        public init(
-            url: URL?,
-            content: @escaping (Image) -> Content,
-            error: @escaping () -> Placeholder
-        ) {
-            self.init(
-                store: NetworkImageStore(url: url),
-                content: content,
-                error: error
-            )
+        public init(url: URL?) {
+            self.init(store: NetworkImageStore(url: url))
         }
 
-        private init(
-            store: NetworkImageStore,
-            content: @escaping (Image) -> Content,
-            error: @escaping () -> Placeholder
-        ) {
+        private init(store: NetworkImageStore) {
             self.store = store
-            self.content = content
-            self.error = error
         }
 
         public var body: some View {
-            switch store.state {
-            case .notRequested, .loading:
-                EmptyView()
-            case let .image(osImage, _):
-                content(Image(osImage: osImage))
-            case .failed:
-                error()
-            }
-        }
-    }
-
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    extension NetworkImage where Placeholder == EmptyView {
-        public init(url: URL?, content: @escaping (Image) -> Content) {
-            self.init(url: url, content: content, error: { EmptyView() })
+            networkImageStyle.makeBody(
+                configuration: NetworkImageConfiguration(state: store.state)
+            )
         }
     }
 
