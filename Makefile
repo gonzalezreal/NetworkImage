@@ -18,3 +18,8 @@ test:
 	xcodebuild \
 			-scheme NetworkImage_watchOS \
 			-destination '$(DESTINATION_WATCHOS)'
+
+format:
+	swiftformat .
+
+.PHONY: format
