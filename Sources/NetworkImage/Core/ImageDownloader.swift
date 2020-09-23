@@ -27,7 +27,7 @@
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public final class ImageDownloader {
-        private let session: URLSession
+        private let data: (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError>
         private let imageCache: ImageCache
 
         public static let shared = ImageDownloader(
@@ -35,8 +35,21 @@
             imageCache: ImmediateImageCache()
         )
 
-        public init(session: URLSession, imageCache: ImageCache) {
-            self.session = session
+        public convenience init(session: URLSession, imageCache: ImageCache) {
+            self.init(
+                data: {
+                    session.dataTaskPublisher(for: $0)
+                        .eraseToAnyPublisher()
+                },
+                imageCache: imageCache
+            )
+        }
+
+        internal init(
+            data: @escaping (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError>,
+            imageCache: ImageCache
+        ) {
+            self.data = data
             self.imageCache = imageCache
         }
 
@@ -46,7 +59,7 @@
                     .setFailureType(to: Error.self)
                     .eraseToAnyPublisher()
             } else {
-                return session.dataTaskPublisher(for: url)
+                return data(url)
                     .tryMap { [imageCache] data, response in
                         if let httpResponse = response as? HTTPURLResponse {
                             guard 200 ..< 300 ~= httpResponse.statusCode else {

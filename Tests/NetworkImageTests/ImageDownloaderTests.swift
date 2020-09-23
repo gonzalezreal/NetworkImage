@@ -25,35 +25,28 @@
     import Combine
     import XCTest
 
-    import NetworkImage
+    @testable import NetworkImage
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     final class ImageDownloaderTests: XCTestCase {
         enum Fixtures {
             static let anyImageURL = URL(string: "https://example.com/dot.png")!
-            static let anyDataImageURL = URL(string: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==")!
             static let anyImage = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==")!
             static let anyResponse = Data(base64Encoded: "Z29uemFsZXpyZWFs")!
         }
 
-        private var sut: ImageDownloader!
         private var cancellables = Set<AnyCancellable>()
 
-        override func setUp() {
-            super.setUp()
-
-            sut = ImageDownloader(session: .stubbed, imageCache: DisabledImageCache())
-        }
-
-        override func tearDown() {
-            HTTPStubProtocol.removeAllStubs()
-            super.tearDown()
+        override func tearDownWithError() throws {
+            cancellables.removeAll()
         }
 
         func testAnyImageResponseReturnsImage() {
             // given
-            givenAnyImageResponse()
-            let didReceiveValue = expectation(description: "didReceiveValue")
+            let sut = ImageDownloader(
+                data: anyImageResponse,
+                imageCache: DisabledImageCache()
+            )
             var result: OSImage?
 
             // when
@@ -61,19 +54,19 @@
                 .assertNoFailure()
                 .sink(receiveValue: {
                     result = $0
-                    didReceiveValue.fulfill()
                 })
                 .store(in: &cancellables)
 
             // then
-            wait(for: [didReceiveValue], timeout: 1)
             XCTAssertNotNil(result)
         }
 
         func testBadStatusResponseFailsWithBadStatusError() {
             // given
-            givenBadStatusResponse()
-            let didFail = expectation(description: "didFail")
+            let sut = ImageDownloader(
+                data: badStatusResponse,
+                imageCache: DisabledImageCache()
+            )
             var result: Error?
 
             // when
@@ -82,7 +75,6 @@
                     receiveCompletion: { completion in
                         if case let .failure(error) = completion {
                             result = error
-                            didFail.fulfill()
                         }
                     },
                     receiveValue: { _ in }
@@ -90,14 +82,15 @@
                 .store(in: &cancellables)
 
             // then
-            wait(for: [didFail], timeout: 1)
             XCTAssertEqual(result as? NetworkImageError, .badStatus(500))
         }
 
         func testAnyResponseFailsWithInvalidDataError() {
             // given
-            givenAnyResponse()
-            let didFail = expectation(description: "didFail")
+            let sut = ImageDownloader(
+                data: anyResponse,
+                imageCache: DisabledImageCache()
+            )
             var result: Error?
 
             // when
@@ -106,7 +99,6 @@
                     receiveCompletion: { completion in
                         if case let .failure(error) = completion {
                             result = error
-                            didFail.fulfill()
                         }
                     },
                     receiveValue: { _ in }
@@ -114,27 +106,7 @@
                 .store(in: &cancellables)
 
             // then
-            wait(for: [didFail], timeout: 1)
             XCTAssertEqual(result as? NetworkImageError, .invalidData(Fixtures.anyResponse))
-        }
-
-        func testAnyDataImageURLReturnsImage() {
-            // given
-            let didReceiveValue = expectation(description: "didReceiveValue")
-            var result: OSImage?
-
-            // when
-            sut.image(for: Fixtures.anyDataImageURL)
-                .assertNoFailure()
-                .sink(receiveValue: {
-                    result = $0
-                    didReceiveValue.fulfill()
-                })
-                .store(in: &cancellables)
-
-            // then
-            wait(for: [didReceiveValue], timeout: 1)
-            XCTAssertNotNil(result)
         }
     }
 
@@ -145,19 +117,58 @@
             func setImage(_: OSImage, for _: URL) {}
         }
 
-        func givenAnyImageResponse() {
-            let request = URLRequest(url: Fixtures.anyImageURL)
-            HTTPStubProtocol.stubRequest(request, data: Fixtures.anyImage, statusCode: 200)
+        var anyImageResponse: (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError> {
+            { url in
+                Just(
+                    (
+                        data: Fixtures.anyImage,
+                        response: HTTPURLResponse(
+                            url: url,
+                            statusCode: 200,
+                            httpVersion: "HTTP/1.1",
+                            headerFields: nil
+                        )!
+                    )
+                )
+                .setFailureType(to: URLError.self)
+                .eraseToAnyPublisher()
+            }
         }
 
-        func givenBadStatusResponse() {
-            let request = URLRequest(url: Fixtures.anyImageURL)
-            HTTPStubProtocol.stubRequest(request, data: Data(), statusCode: 500)
+        var badStatusResponse: (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError> {
+            { url in
+                Just(
+                    (
+                        data: Data(),
+                        response: HTTPURLResponse(
+                            url: url,
+                            statusCode: 500,
+                            httpVersion: "HTTP/1.1",
+                            headerFields: nil
+                        )!
+                    )
+                )
+                .setFailureType(to: URLError.self)
+                .eraseToAnyPublisher()
+            }
         }
 
-        func givenAnyResponse() {
-            let request = URLRequest(url: Fixtures.anyImageURL)
-            HTTPStubProtocol.stubRequest(request, data: Fixtures.anyResponse, statusCode: 200)
+        var anyResponse: (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError> {
+            { url in
+                Just(
+                    (
+                        data: Fixtures.anyResponse,
+                        response: HTTPURLResponse(
+                            url: url,
+                            statusCode: 200,
+                            httpVersion: "HTTP/1.1",
+                            headerFields: nil
+                        )!
+                    )
+                )
+                .setFailureType(to: URLError.self)
+                .eraseToAnyPublisher()
+            }
         }
     }
 #endif
