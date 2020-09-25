@@ -1,82 +1,181 @@
 # NetworkImage
-![Swift 5.2](https://img.shields.io/badge/Swift-5.2-orange.svg)
-![Platforms](https://img.shields.io/badge/platforms-iOS+tvOS+watchOS-brightgreen.svg?style=flat)
-[![Swift Package Manager](https://img.shields.io/badge/spm-compatible-brightgreen.svg?style=flat)](https://swift.org/package-manager)
+[![CI](https://github.com/gonzalezreal/NetworkImage/workflows/CI/badge.svg)](https://github.com/gonzalezreal/NetworkImage/actions?query=workflow%3ACI)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
 [![Twitter: @gonzalezreal](https://img.shields.io/badge/twitter-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
 
-**NetworkImage** is a Swift µpackage that provides image downloading and caching for your apps. It leverages the foundation [`URLCache`](https://developer.apple.com/documentation/foundation/urlcache), providing persistent and in-memory caches. 
+NetworkImage is a Swift µpackage that provides image downloading, caching, and displaying for your SwiftUI apps. It leverages the foundation URLCache, providing persistent and in-memory caches.
 
-## Usage
+You can explore all the capabilities of this package in the [companion playground](/Playgrounds/NetworkImage.playground).
 
-The simplest way to display remote images in your UIKit app is by using `NetworkImageView`. This `UIView` subclass provides a `url` property to configure the image URL, and a `placeholder` property to configure the image that will be displayed when the URL is `nil` or the image fails to load. On top of that, it performs a cross-fade transition when the image takes more than a certain time to load. 
+* [Displaying network images](#displaying-network-images)
+* [Customizing network images](#customizing-network-images)
+* [Creating custom network image styles](#creating-custom-network-image-styles)
+* [Displaying network images in UIKit](#displaying-network-images-UIKit)
+* [Using the shared ImageDownloader](#using-the-shared-imageDownloader)
+* [Installation](#installation)
+* [Help & Feedback](#help--feedback)
+ 
+## Displaying network images
+You can use a `NetworkImage` view to display an image from a given URL. The download happens asynchronously, and the resulting image is cached both in disk and memory.
 
-```Swift
-class MovieItemCell: UICollectionViewCell {
-    // ...
-    private lazy var imageView = NetworkImageView()
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        // cancels any ongoing image download and resets the view
-        imageView.prepareForReuse()
-    }
-    
-    func configure(with movieItem: MovieItem) {
-        // ...
-        imageView.url = movieItem.posterURL
-        imageView.placeholder = Image(systemName: "film")
-    }
-}
-```
-
-If you need a more customized behavior, like applying transformations to images or providing your custom animations and loading state, you can use the `ImageDownloader` object directly.
-
-```Swift
-class MovieItemCell: UICollectionViewCell {
-    // ...
-    private lazy var imageView = ImageView()
-    private var cancellable: AnyCancellable?
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        cancellable?.cancel()
-    }
-    
-    func configure(with movieItem: MovieItem) {
-        // ...
-        cancellable = ImageDownloader.shared.image(for: movieItem.posterURL)
-            .map { $0.applySomeFancyEffect() }
-            .replaceError(with: Image(systemName: "film")!)
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.image, on: imageView)
-    }
-}
-```
-
-It is also straightforward to implement a SwiftUI view that displays a remote image, by using the `NetworkImage` view. 
-
-```Swift
+```swift
 struct ContentView: View {
-    var url = URL(string: "https://image.tmdb.org/t/p/w300/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg")
-
     var body: some View {
+        NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+            .frame(width: 300, height: 200)
+    }
+}
+```
+
+By default, remote images are resizable and fill the available space while maintaining the aspect ratio.
+
+## Customizing network images
+You can customize a network image's appearance by using a network image style. The default image style is an instance of `ResizableNetworkImageStyle` configured to `fill` the available space. To set a specific style for all network images within a view, you can use the `networkImageStyle(_:)` modifier.
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        HStack {
+            NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
+                .frame(width: 200, height: 200)
+            NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+                .frame(width: 200, height: 200)
+        }
+        .networkImageStyle(
+            ResizableNetworkImageStyle(
+                backgroundColor: .yellow,
+                contentMode: .fit
+            )
+        )
+    }
+}
+```
+
+## Creating custom network image styles
+To add a custom appearance, create a type that conforms to the `NetworkImageStyle` protocol. You can customize a network image's appearance in all of its different states: loading, displaying an image or failed.
+
+```swift
+struct RoundedImageStyle: NetworkImageStyle {
+    var width: CGFloat?
+    var height: CGFloat?
+
+    func makeBody(state: NetworkImageState) -> some View {
         ZStack {
             Color(.secondarySystemBackground)
-            NetworkImage(url) { image in
+
+            switch state {
+            case .loading:
+                EmptyView()
+            case let .image(image, _):
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-            }
-            onError: {
+            case .failed:
                 Image(systemName: "photo")
                     .foregroundColor(Color(.systemFill))
             }
         }
-        .frame(width: 200, height: 300)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 5))
     }
 }
 ```
+
+Then set the custom style for all network images within a view, using the `networkImageStyle(_:)` modifier:
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        HStack {
+            NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
+            NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+        }
+        .networkImageStyle(
+            RoundedImageStyle(width: 200, height: 200)
+        )
+    }
+}
+```
+
+## Displaying network images in UIKit
+The simplest way to display remote images in UIKit is by using `NetworkImageView`. You need to provide the URL where the image is located and optionally configure a placeholder image that will be displayed if the download fails or the URL is `nil`. When there is no cached image for the given URL, and the download takes more than a specific time, the view performs a cross-fade transition between the placeholder and the result.
+
+```swift
+class MyViewController: UIViewController {
+    override func loadView() {
+        let view = UIView()
+        view.backgroundColor = .systemBackground
+
+        let imageView = NetworkImageView()
+        imageView.url = URL(string: "https://picsum.photos/id/237/300/200")
+
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(imageView)
+
+        NSLayoutConstraint.activate([
+            imageView.widthAnchor.constraint(equalToConstant: 300),
+            imageView.heightAnchor.constraint(equalToConstant: 200),
+            imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+        ])
+
+        self.view = view
+    }
+}
+```
+
+## Using the shared ImageDownloader
+If you need a more customized behavior, like applying image transformations or providing custom animations, you can use the shared `ImageDownloader` object directly.
+
+<details>
+  <summary>Click to expand!</summary>
+  
+  ```swift
+  class MyViewController: UIViewController {
+      private lazy var imageView = UIImageView()
+      private var cancellables: Set<AnyCancellable> = []
+
+      override func loadView() {
+          let view = UIView()
+          view.backgroundColor = .systemBackground
+
+          imageView.translatesAutoresizingMaskIntoConstraints = false
+          imageView.backgroundColor = .secondarySystemBackground
+          view.addSubview(imageView)
+
+          NSLayoutConstraint.activate([
+              imageView.widthAnchor.constraint(equalToConstant: 300),
+              imageView.heightAnchor.constraint(equalToConstant: 200),
+              imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+              imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+          ])
+
+          self.view = view
+      }
+
+      override func viewDidLoad() {
+          super.viewDidLoad()
+
+          ImageDownloader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
+              .map { image in
+                  // tint the image with a yellow color
+                  UIGraphicsImageRenderer(size: image.size).image { _ in
+                      image.draw(at: .zero)
+                      UIColor.systemYellow.setFill()
+                      UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
+                  }
+              }
+              .replaceError(with: UIImage(systemName: "film")!)
+              .receive(on: DispatchQueue.main)
+              .sink(receiveValue: { [imageView] image in
+                  imageView.image = image
+              })
+              .store(in: &cancellables)
+      }
+  }
+  ```
+</details>
 
 ## Installation
 **Using the Swift Package Manager**
@@ -84,10 +183,10 @@ struct ContentView: View {
 Add NetworkImage as a dependency to your `Package.swift` file. For more information, see the [Swift Package Manager documentation](https://github.com/apple/swift-package-manager/tree/master/Documentation).
 
 ```
-.package(url: "https://github.com/gonzalezreal/NetworkImage", from: "1.0.0")
+.package(url: "https://github.com/gonzalezreal/NetworkImage", from: "1.1.0")
 ```
 
 ## Help & Feedback
 - [Open an issue](https://github.com/gonzalezreal/NetworkImage/issues/new) if you need help, if you found a bug, or if you want to discuss a feature request.
-- [Open a PR](https://github.com/gonzalezreal/NetworkImage/pull/new/master) if you want to make some change to `Reusable`.
+- [Open a PR](https://github.com/gonzalezreal/NetworkImage/pull/new/master) if you want to make some change to `NetworkImage`.
 - Contact [@gonzalezreal](https://twitter.com/gonzalezreal) on Twitter.
