@@ -1,5 +1,6 @@
 import Foundation
 
+/// An in-memory `ImageCache`.
 public final class ImmediateImageCache: ImageCache {
     private let cache = NSCache<NSURL, OSImage>()
 

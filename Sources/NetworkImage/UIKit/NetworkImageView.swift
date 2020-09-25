@@ -2,9 +2,40 @@
     import Combine
     import UIKit
 
+    /// A view that displays a remote image.
+    ///
+    /// A network image view downloads and displays an image from a given URL.
+    /// The download is asynchronous, and the result is cached both in disk and memory.
+    ///
+    /// You can specify a placeholder image that will be displayed if the download fails or the URL is `nil`.
+    ///
+    /// When there is no cached image for the given URL, and the download takes more than a specific time,
+    /// the view performs a cross-fade transition between the placeholder and the result.
+    ///
+    /// As a basic example, consider a UICollectionView subclass that displays a movie poster:
+    ///
+    ///     class MoviePosterCell: UICollectionViewCell {
+    ///         private lazy var imageView = NetworkImageView()
+    ///
+    ///         override func prepareForReuse() {
+    ///             super.prepareForReuse()
+    ///             // cancels any ongoing image download and resets the view
+    ///             imageView.prepareForReuse()
+    ///         }
+    ///
+    ///         func configure(with movie: Movie) {
+    ///             imageView.url = movie.posterURL
+    ///             imageView.placeholder = Image(systemName: "film")
+    ///         }
+    ///
+    ///         ...
+    ///     }
     @available(iOS 13.0, tvOS 13.0, *)
     open class NetworkImageView: UIView {
+        /// Placeholder image that will be used when `url` is `nil` or the download fails.
         open var placeholder = UIImage(systemName: "photo")
+
+        /// The URL for the image.
         open var url: URL? {
             didSet { store.send(.didSetURL(url)) }
         }
@@ -27,6 +58,7 @@
             setUp()
         }
 
+        /// Resets the view and cancels any ongoing download.
         open func prepareForReuse() {
             store.send(.prepareForReuse)
         }

@@ -2,6 +2,36 @@
     import Combine
     import Foundation
 
+    /// An `ImagePrefetcher` object and be used to preload images and warm the caches up,
+    /// providing a smoother user experience when scrolling through collection views.
+    ///
+    /// You can use an `ImagePrefetcher` instance to implement a prefetch data source in a
+    /// collection view:
+    ///
+    ///     class MovieListViewController: UICollectionViewController, UICollectionViewDataSourcePrefetching {
+    ///         private lazy var imagePrefetcher = ImagePrefetcher()
+    ///         override func viewDidLoad() {
+    ///             super.viewDidLoad()
+    ///             collectionView.prefetchDataSource = self
+    ///         }
+    ///
+    ///         func collectionView(_: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+    ///             imagePrefetcher.prefetchImages(with: imageURLs(for: indexPaths))
+    ///         }
+    ///
+    ///         func collectionView(_: UICollectionView, cancelPrefetchingForItemsAt indexPaths: [IndexPath]) {
+    ///             imagePrefetcher.cancelPrefetchingImages(with: imageURLs(for: indexPaths))
+    ///         }
+    ///
+    ///         func imageURLs(for indexPaths: [IndexPath]) -> Set<URL> {
+    ///             Set(
+    ///                 indexPaths.map {
+    ///                     viewModel.item(at: $0)
+    ///                 }
+    ///                 .compactMap(\.imageURL)
+    ///             )
+    ///         }
+    ///     }
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public final class ImagePrefetcher {
         private let session: URLSession

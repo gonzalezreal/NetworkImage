@@ -2,6 +2,12 @@
 
     import SwiftUI
 
+    /// A network image style that does not decorate the resulting image but applies the
+    /// `resizable()` and `aspectRatio(contentMode:)` modifiers to it, and
+    /// displays a placeholder image when loading fails or the given URL is `nil`.
+    ///
+    /// To apply this style to a network image, or to a view that contains network images,
+    /// use the `networkImageStyle(_:)` modifier.
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public struct ResizableNetworkImageStyle: NetworkImageStyle {
         public enum Defaults {
@@ -39,6 +45,13 @@
         private let contentMode: ContentMode
         private let errorPlaceholder: Image?
 
+        /// Creates a resizable network image style.
+        ///
+        /// - Parameters:
+        ///   - backgroundColor: The background color of the network image in any state.
+        ///   - foregroundColor: The tint color for the placeholder image.
+        ///   - contentMode: The content mode applied to the resulting image.
+        ///   - errorPlaceholder: An image to display when there is an error or the URL is `nil`.
         public init(
             backgroundColor: Color = Defaults.backgroundColor,
             foregroundColor: Color = Defaults.foregroundColor,
@@ -51,11 +64,17 @@
             self.errorPlaceholder = errorPlaceholder
         }
 
-        public func makeBody(configuration: NetworkImageConfiguration) -> some View {
+        /// Creates a view that represents the body of a network image.
+        ///
+        /// The system calls this method for each `NetworkImage` instance in a view
+        /// hierarchy where this style is the current network image style.
+        ///
+        /// - Parameter state: The state of the network image.
+        public func makeBody(state: NetworkImageState) -> some View {
             ZStack {
                 backgroundColor
 
-                switch configuration {
+                switch state {
                 case .loading:
                     EmptyView()
                 case let .image(image, _):
