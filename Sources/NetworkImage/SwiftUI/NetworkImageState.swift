@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if !(os(iOS) && (arch(i386) || arch(arm))) && canImport(SwiftUI)
 
     import SwiftUI
 
