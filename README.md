@@ -2,7 +2,7 @@
 [![CI](https://github.com/gonzalezreal/NetworkImage/workflows/CI/badge.svg)](https://github.com/gonzalezreal/NetworkImage/actions?query=workflow%3ACI)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
-[![contact: @gonzalezreal](https://img.shields.io/badge/twitter-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
+[![contact: @gonzalezreal](https://img.shields.io/badge/contact-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
 
 NetworkImage is a Swift µpackage that provides image downloading, caching, and displaying for your SwiftUI apps. It leverages the foundation URLCache, providing persistent and in-memory caches.
 
@@ -99,9 +99,6 @@ struct ContentView: View {
 
 ## Using the shared ImageDownloader
 For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
-
-<details>
-  <summary>Click to expand!</summary>
   
   ```swift
   class MyViewController: UIViewController {
@@ -146,8 +143,7 @@ For other use cases outside the scope of SwiftUI, you can download images direct
               .store(in: &cancellables)
       }
   }
-  ```
-</details>
+```
 
 ## Installation
 You can add NetworkImage to an Xcode project by adding it as a package dependency.
