@@ -7,7 +7,7 @@ import UIKit
 import NetworkImage
 
 /*:
- If you need a more customized behavior, like applying image transformations or providing custom animations, you can use the shared `ImageDownloader` object directly.
+ For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
  */
 
 class MyViewController: UIViewController {
@@ -52,7 +52,5 @@ class MyViewController: UIViewController {
             .store(in: &cancellables)
     }
 }
-
-//: [Next](@next)
 
 PlaygroundPage.current.liveView = MyViewController()

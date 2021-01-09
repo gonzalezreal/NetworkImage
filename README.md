@@ -2,7 +2,7 @@
 [![CI](https://github.com/gonzalezreal/NetworkImage/workflows/CI/badge.svg)](https://github.com/gonzalezreal/NetworkImage/actions?query=workflow%3ACI)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
-[![Twitter: @gonzalezreal](https://img.shields.io/badge/twitter-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
+[![contact: @gonzalezreal](https://img.shields.io/badge/twitter-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
 
 NetworkImage is a Swift µpackage that provides image downloading, caching, and displaying for your SwiftUI apps. It leverages the foundation URLCache, providing persistent and in-memory caches.
 
@@ -11,7 +11,6 @@ You can explore all the capabilities of this package in the [companion playgroun
 * [Displaying network images](#displaying-network-images)
 * [Customizing network images](#customizing-network-images)
 * [Creating custom network image styles](#creating-custom-network-image-styles)
-* [Displaying network images in UIKit](#displaying-network-images-UIKit)
 * [Using the shared ImageDownloader](#using-the-shared-imageDownloader)
 * [Installation](#installation)
 * [Help & Feedback](#help--feedback)
@@ -98,35 +97,8 @@ struct ContentView: View {
 }
 ```
 
-## Displaying network images in UIKit
-The simplest way to display remote images in UIKit is by using `NetworkImageView`. You need to provide the URL where the image is located and optionally configure a placeholder image that will be displayed if the download fails or the URL is `nil`. When there is no cached image for the given URL, and the download takes more than a specific time, the view performs a cross-fade transition between the placeholder and the result.
-
-```swift
-class MyViewController: UIViewController {
-    override func loadView() {
-        let view = UIView()
-        view.backgroundColor = .systemBackground
-
-        let imageView = NetworkImageView()
-        imageView.url = URL(string: "https://picsum.photos/id/237/300/200")
-
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(imageView)
-
-        NSLayoutConstraint.activate([
-            imageView.widthAnchor.constraint(equalToConstant: 300),
-            imageView.heightAnchor.constraint(equalToConstant: 200),
-            imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-        ])
-
-        self.view = view
-    }
-}
-```
-
 ## Using the shared ImageDownloader
-If you need a more customized behavior, like applying image transformations or providing custom animations, you can use the shared `ImageDownloader` object directly.
+For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
 
 <details>
   <summary>Click to expand!</summary>
@@ -178,13 +150,10 @@ If you need a more customized behavior, like applying image transformations or p
 </details>
 
 ## Installation
-**Using the Swift Package Manager**
-
-Add NetworkImage as a dependency to your `Package.swift` file. For more information, see the [Swift Package Manager documentation](https://github.com/apple/swift-package-manager/tree/master/Documentation).
-
-```
-.package(url: "https://github.com/gonzalezreal/NetworkImage", from: "1.1.0")
-```
+You can add NetworkImage to an Xcode project by adding it as a package dependency.
+1. From the **File** menu, select **Swift Packages › Add Package Dependency…**
+1. Enter `https://github.com/gonzalezreal/NetworkImage` into the package repository URL text field
+1. Link **NetworkImage** to your application target
 
 ## Help & Feedback
 - [Open an issue](https://github.com/gonzalezreal/NetworkImage/issues/new) if you need help, if you found a bug, or if you want to discuss a feature request.

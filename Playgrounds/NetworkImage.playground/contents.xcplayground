@@ -5,7 +5,6 @@
         <page name='Displaying_network_images'/>
         <page name='Customizing_network_images'/>
         <page name='Creating_custom_network_image_styles'/>
-        <page name='Displaying_network_images_UIKit'/>
         <page name='Using_ImageDownloader'/>
     </pages>
 </playground>
