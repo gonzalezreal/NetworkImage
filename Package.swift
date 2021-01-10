@@ -16,6 +16,11 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.1.2"),
+        .package(
+            name: "SnapshotTesting",
+            url: "https://github.com/pointfreeco/swift-snapshot-testing",
+            from: "1.8.2"
+        ),
     ],
     targets: [
         .target(
@@ -24,6 +29,16 @@ let package = Package(
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
             ]
         ),
-        .testTarget(name: "NetworkImageTests", dependencies: ["NetworkImage"]),
+        .testTarget(
+            name: "NetworkImageTests",
+            dependencies: [
+                "NetworkImage",
+                "SnapshotTesting",
+            ],
+            exclude: [
+                "__Snapshots__",
+                "__Fixtures__",
+            ]
+        ),
     ]
 )
