@@ -23,8 +23,21 @@
     ///     .networkImageStyle(BackdropNetworkImageStyle())
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     public struct NetworkImage: View {
+        /// Determines whether NetworkImage downloads images synchronously.
+        ///
+        /// If `false` (the default), NetworkImage downloads images asynchronously, without blocking the UI.
+        ///
+        /// If `true`, NetworkImage blocks the UI thread until image data is ready or an error occurs.
+        ///
+        /// - Note:
+        /// Set this property to `true` only for testing or debugging purposes. Your app should always download
+        /// images **asynchronously** without blocking the UI thread.
+        public static var isSynchronous = false
+
         @Environment(\.networkImageStyle) private var networkImageStyle
-        @StateObject private var store = NetworkImageStore()
+        @StateObject private var store = NetworkImageStore(
+            environment: Self.isSynchronous ? .synchronous : .asynchronous
+        )
 
         private let url: URL?
 

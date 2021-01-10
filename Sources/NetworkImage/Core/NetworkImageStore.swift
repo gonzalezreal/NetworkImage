@@ -30,12 +30,28 @@
         }
 
         struct Environment {
+            static let asynchronous = Environment(
+                image: ImageDownloader.shared.image(for:),
+                scheduler: DispatchQueue.main.eraseToAnyScheduler()
+            )
+
+            static let synchronous = Environment(
+                image: { url in
+                    Result {
+                        try decodeImage(from: Data(contentsOf: url))
+                    }
+                    .publisher
+                    .eraseToAnyPublisher()
+                },
+                scheduler: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+            )
+
             let image: (URL) -> AnyPublisher<OSImage, Error>
             let scheduler: AnySchedulerOf<DispatchQueue>
 
             init(
-                image: @escaping (URL) -> AnyPublisher<OSImage, Error> = ImageDownloader.shared.image(for:),
-                scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.main.eraseToAnyScheduler()
+                image: @escaping (URL) -> AnyPublisher<OSImage, Error>,
+                scheduler: AnySchedulerOf<DispatchQueue>
             ) {
                 self.image = image
                 self.scheduler = scheduler
@@ -47,7 +63,7 @@
         private let environment: Environment
         private var cancellable: AnyCancellable?
 
-        init(environment: Environment = Environment()) {
+        init(environment: Environment) {
             self.environment = environment
         }
 
