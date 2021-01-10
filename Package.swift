@@ -7,8 +7,8 @@ let package = Package(
     name: "NetworkImage",
     platforms: [
         .macOS(.v10_12),
-        .iOS(.v10),
-        .tvOS(.v10),
+        .iOS(.v11),
+        .tvOS(.v11),
         .watchOS(.v3),
     ],
     products: [

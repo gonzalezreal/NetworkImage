@@ -8,14 +8,31 @@ NetworkImage is a Swift µpackage that provides image downloading, caching, and 
 
 You can explore all the capabilities of this package in the [companion playground](/Playgrounds/NetworkImage.playground).
 
-* [Displaying network images](#displaying-network-images)
-* [Customizing network images](#customizing-network-images)
-* [Creating custom network image styles](#creating-custom-network-image-styles)
-* [Using the shared ImageDownloader](#using-the-shared-imageDownloader)
+* [Supported Platforms](#supported-platforms)
+* [Displaying Network Images](#displaying-network-images)
+* [Customizing Network Images](#customizing-network-images)
+* [Creating Custom Image Styles](#creating-custom-image-styles)
+* [Using the Shared ImageDownloader](#using-the-shared-imageDownloader)
 * [Installation](#installation)
-* [Help & Feedback](#help--feedback)
- 
-## Displaying network images
+* [Other Libraries](#other-libraries)
+
+## Supported Platforms
+
+You can use the `NetworkImage` SwiftUI view in the following platforms:
+
+* macOS 11.0+
+* iOS 14.0+
+* tvOS 14.0+
+* watchOS 7.0+
+
+The `ImageDownloader` is available in: 
+
+* macOS 10.15+
+* iOS 13.0+
+* tvOS 13.0+
+* watchOS 6.0+
+
+## Displaying Network Images
 You can use a `NetworkImage` view to display an image from a given URL. The download happens asynchronously, and the resulting image is cached both in disk and memory.
 
 ```swift
@@ -29,7 +46,7 @@ struct ContentView: View {
 
 By default, remote images are resizable and fill the available space while maintaining the aspect ratio.
 
-## Customizing network images
+## Customizing Network Images
 You can customize a network image's appearance by using a network image style. The default image style is an instance of `ResizableNetworkImageStyle` configured to `fill` the available space. To set a specific style for all network images within a view, you can use the `networkImageStyle(_:)` modifier.
 
 ```swift
@@ -51,7 +68,7 @@ struct ContentView: View {
 }
 ```
 
-## Creating custom network image styles
+## Creating Custom Image Styles
 To add a custom appearance, create a type that conforms to the `NetworkImageStyle` protocol. You can customize a network image's appearance in all of its different states: loading, displaying an image or failed.
 
 ```swift
@@ -97,7 +114,7 @@ struct ContentView: View {
 }
 ```
 
-## Using the shared ImageDownloader
+## Using the Shared ImageDownloader
 For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
   
   ```swift
@@ -151,7 +168,5 @@ You can add NetworkImage to an Xcode project by adding it as a package dependenc
 1. Enter `https://github.com/gonzalezreal/NetworkImage` into the package repository URL text field
 1. Link **NetworkImage** to your application target
 
-## Help & Feedback
-- [Open an issue](https://github.com/gonzalezreal/NetworkImage/issues/new) if you need help, if you found a bug, or if you want to discuss a feature request.
-- [Open a PR](https://github.com/gonzalezreal/NetworkImage/pull/new/master) if you want to make some change to `NetworkImage`.
-- Contact [@gonzalezreal](https://twitter.com/gonzalezreal) on Twitter.
+## Other Libraries
+* [AsyncImage](https://github.com/V8tr/AsyncImage)

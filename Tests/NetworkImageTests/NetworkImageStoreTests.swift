@@ -26,7 +26,6 @@
             let sut = NetworkImageStore(
                 environment: NetworkImageStore.Environment(
                     image: successfulImage,
-                    currentTime: incrementingCurrentTime,
                     scheduler: scheduler.eraseToAnyScheduler()
                 )
             )
@@ -37,9 +36,9 @@
                 .store(in: &cancellables)
 
             // when
-            sut.send(.didSetURL(nil))
-            sut.send(.didSetURL(Fixtures.anyURL))
-            sut.send(.didSetURL(nil))
+            sut.send(.onAppear(nil))
+            sut.send(.onAppear(Fixtures.anyURL))
+            sut.send(.onAppear(nil))
             scheduler.run()
 
             // then
@@ -47,7 +46,7 @@
                 [
                     .notRequested,
                     .failed,
-                    .loading,
+                    .loading(Fixtures.anyURL),
                     .failed,
                 ],
                 result
@@ -59,7 +58,6 @@
             let sut = NetworkImageStore(
                 environment: NetworkImageStore.Environment(
                     image: successfulImage,
-                    currentTime: incrementingCurrentTime,
                     scheduler: scheduler.eraseToAnyScheduler()
                 )
             )
@@ -70,17 +68,18 @@
                 .store(in: &cancellables)
 
             // when
-            sut.send(.didSetURL(Fixtures.anyURL))
-            sut.send(.didSetURL(Fixtures.anyOtherURL))
+            sut.send(.onAppear(Fixtures.anyURL))
+            sut.send(.onAppear(Fixtures.anyURL))
+            sut.send(.onAppear(Fixtures.anyOtherURL))
             scheduler.run()
 
             // then
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .loading,
-                    .loading,
-                    .image(Fixtures.anyImage, elapsedTime: 2),
+                    .loading(Fixtures.anyURL),
+                    .loading(Fixtures.anyOtherURL),
+                    .image(Fixtures.anyOtherURL, Fixtures.anyImage),
                 ],
                 result
             )
@@ -91,7 +90,6 @@
             let sut = NetworkImageStore(
                 environment: NetworkImageStore.Environment(
                     image: failedImage,
-                    currentTime: incrementingCurrentTime,
                     scheduler: scheduler.eraseToAnyScheduler()
                 )
             )
@@ -102,46 +100,15 @@
                 .store(in: &cancellables)
 
             // when
-            sut.send(.didSetURL(Fixtures.anyURL))
+            sut.send(.onAppear(Fixtures.anyURL))
             scheduler.run()
 
             // then
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .loading,
+                    .loading(Fixtures.anyURL),
                     .failed,
-                ],
-                result
-            )
-        }
-
-        func testPrepareForReuse() {
-            // given
-            let sut = NetworkImageStore(
-                environment: NetworkImageStore.Environment(
-                    image: successfulImage,
-                    currentTime: incrementingCurrentTime,
-                    scheduler: scheduler.eraseToAnyScheduler()
-                )
-            )
-            var result: [NetworkImageStore.State] = []
-
-            sut.$state
-                .sink { result.append($0) }
-                .store(in: &cancellables)
-
-            // when
-            sut.send(.didSetURL(Fixtures.anyURL))
-            sut.send(.prepareForReuse)
-            scheduler.run()
-
-            // then
-            XCTAssertEqual(
-                [
-                    .notRequested,
-                    .loading,
-                    .notRequested,
                 ],
                 result
             )
@@ -164,14 +131,6 @@
                 Fail(error: Fixtures.anyError)
                     .delay(for: .seconds(1), scheduler: self.scheduler)
                     .eraseToAnyPublisher()
-            }
-        }
-
-        var incrementingCurrentTime: () -> Double {
-            var start = 0.0
-            return {
-                defer { start += 1 }
-                return start
             }
         }
     }

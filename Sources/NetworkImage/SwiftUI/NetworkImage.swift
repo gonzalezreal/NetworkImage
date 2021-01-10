@@ -1,17 +1,6 @@
-#if !(os(iOS) && (arch(i386) || arch(arm))) && canImport(SwiftUI)
+#if canImport(SwiftUI)
 
     import SwiftUI
-
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    extension NetworkImageStore: ObservableObject {}
-
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    internal extension NetworkImageStore {
-        convenience init(url: URL?) {
-            self.init()
-            send(.didSetURL(url))
-        }
-    }
 
     /// A view that displays a remote image.
     ///
@@ -32,25 +21,23 @@
     ///         NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
     ///     }
     ///     .networkImageStyle(BackdropNetworkImageStyle())
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     public struct NetworkImage: View {
         @Environment(\.networkImageStyle) private var networkImageStyle
-        @ObservedObject private var store: NetworkImageStore
+        @StateObject private var store = NetworkImageStore()
+
+        private let url: URL?
 
         /// Creates a network image.
         /// - Parameter url: The URL where the image is located.
         public init(url: URL?) {
-            self.init(store: NetworkImageStore(url: url))
-        }
-
-        private init(store: NetworkImageStore) {
-            self.store = store
+            self.url = url
         }
 
         public var body: some View {
-            networkImageStyle.makeBody(
-                state: NetworkImageState(state: store.state)
-            )
+            networkImageStyle
+                .makeBody(state: NetworkImageState(state: store.state))
+                .onAppear { store.send(.onAppear(url)) }
         }
     }
 

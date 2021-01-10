@@ -4,33 +4,40 @@
     import Foundation
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    internal final class NetworkImageStore {
+    internal final class NetworkImageStore: ObservableObject {
         enum State: Equatable {
             case notRequested
-            case loading
-            case image(OSImage, elapsedTime: TimeInterval)
+            case loading(URL)
+            case image(URL, OSImage)
             case failed
+
+            var url: URL? {
+                switch self {
+                case let .loading(url):
+                    return url
+                case let .image(url, _):
+                    return url
+                case .notRequested, .failed:
+                    return nil
+                }
+            }
         }
 
         enum Action {
-            case didSetURL(URL?)
-            case didLoadImage(OSImage, elapsedTime: TimeInterval)
+            case onAppear(URL?)
+            case didLoadImage(URL, OSImage)
             case didFail
-            case prepareForReuse
         }
 
         struct Environment {
             let image: (URL) -> AnyPublisher<OSImage, Error>
-            let currentTime: () -> Double
             let scheduler: AnySchedulerOf<DispatchQueue>
 
             init(
                 image: @escaping (URL) -> AnyPublisher<OSImage, Error> = ImageDownloader.shared.image(for:),
-                currentTime: @escaping () -> Double = CFAbsoluteTimeGetCurrent,
                 scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.main.eraseToAnyScheduler()
             ) {
                 self.image = image
-                self.currentTime = currentTime
                 self.scheduler = scheduler
             }
         }
@@ -46,29 +53,23 @@
 
         func send(_ action: Action) {
             switch action {
-            case .didSetURL(.none):
+            case .onAppear(.none):
                 state = .failed
                 cancellable?.cancel()
-            case let .didSetURL(.some(url)):
-                let startTime = environment.currentTime()
-                state = .loading
+            case let .onAppear(.some(url)):
+                guard url != state.url else { return }
+                state = .loading(url)
                 cancellable = environment.image(url)
-                    .map { [environment] image in
-                        let elapsedTime = environment.currentTime() - startTime
-                        return .didLoadImage(image, elapsedTime: elapsedTime)
-                    }
+                    .map { .didLoadImage(url, $0) }
                     .replaceError(with: .didFail)
                     .receive(on: environment.scheduler)
                     .sink(receiveValue: { [weak self] action in
                         self?.send(action)
                     })
-            case let .didLoadImage(image, elapsedTime):
-                state = .image(image, elapsedTime: elapsedTime)
+            case let .didLoadImage(url, image):
+                state = .image(url, image)
             case .didFail:
                 state = .failed
-            case .prepareForReuse:
-                state = .notRequested
-                cancellable?.cancel()
             }
         }
     }
