@@ -16,8 +16,22 @@
         /// The system calls this method for each `NetworkImage` instance in a view
         /// hierarchy where this style is the current network image style.
         ///
-        /// - Parameter state: The state of the network image.
-        @ViewBuilder func makeBody(state: NetworkImageState) -> Body
+        /// - Parameter configuration: The properties of a network image, such as
+        /// the actual image and its logical size.
+        func makeBody(configuration: Self.Configuration) -> Body
+
+        /// A type alias for the properties of a network image view instance.
+        typealias Configuration = NetworkImageStyleConfiguration
+    }
+
+    /// The properties of a network image view instance.
+    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    public struct NetworkImageStyleConfiguration {
+        /// The image presented by the network image view.
+        public var image: Image
+
+        /// The logical dimensions, in points, for the image.
+        public var size: CGSize
     }
 
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
@@ -30,16 +44,16 @@
 
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     struct AnyNetworkImageStyle: NetworkImageStyle {
-        private let _makeBody: (NetworkImageState) -> AnyView
+        private let _makeBody: (Configuration) -> AnyView
 
         init<S>(_ networkImageStyle: S) where S: NetworkImageStyle {
             _makeBody = {
-                AnyView(networkImageStyle.makeBody(state: $0))
+                AnyView(networkImageStyle.makeBody(configuration: $0))
             }
         }
 
-        func makeBody(state: NetworkImageState) -> AnyView {
-            _makeBody(state)
+        func makeBody(configuration: Configuration) -> AnyView {
+            _makeBody(configuration)
         }
     }
 

@@ -7,13 +7,6 @@
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     final class NetworkImageStoreTests: XCTestCase {
-        enum Fixtures {
-            static let anyError = NetworkImageError.badStatus(500)
-            static let anyURL = URL(string: "https://example.com/anyImage.jpg")!
-            static let anyOtherURL = URL(string: "https://example.com/anyOtherImage.jpg")!
-            static let anyImage = OSImage()
-        }
-
         private let scheduler = DispatchQueue.testScheduler
         private var cancellables = Set<AnyCancellable>()
 
@@ -37,7 +30,7 @@
 
             // when
             sut.send(.onAppear(nil))
-            sut.send(.onAppear(Fixtures.anyURL))
+            sut.send(.onAppear(Fixtures.anyImageURL))
             sut.send(.onAppear(nil))
             scheduler.run()
 
@@ -46,7 +39,7 @@
                 [
                     .notRequested,
                     .failed,
-                    .loading(Fixtures.anyURL),
+                    .loading(Fixtures.anyImageURL),
                     .failed,
                 ],
                 result
@@ -68,18 +61,18 @@
                 .store(in: &cancellables)
 
             // when
-            sut.send(.onAppear(Fixtures.anyURL))
-            sut.send(.onAppear(Fixtures.anyURL))
-            sut.send(.onAppear(Fixtures.anyOtherURL))
+            sut.send(.onAppear(Fixtures.anyImageURL))
+            sut.send(.onAppear(Fixtures.anyImageURL))
+            sut.send(.onAppear(Fixtures.anyOtherImageURL))
             scheduler.run()
 
             // then
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .loading(Fixtures.anyURL),
-                    .loading(Fixtures.anyOtherURL),
-                    .image(Fixtures.anyOtherURL, Fixtures.anyImage),
+                    .loading(Fixtures.anyImageURL),
+                    .loading(Fixtures.anyOtherImageURL),
+                    .image(Fixtures.anyOtherImageURL, Fixtures.anyImage),
                 ],
                 result
             )
@@ -100,14 +93,14 @@
                 .store(in: &cancellables)
 
             // when
-            sut.send(.onAppear(Fixtures.anyURL))
+            sut.send(.onAppear(Fixtures.anyImageURL))
             scheduler.run()
 
             // then
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .loading(Fixtures.anyURL),
+                    .loading(Fixtures.anyImageURL),
                     .failed,
                 ],
                 result

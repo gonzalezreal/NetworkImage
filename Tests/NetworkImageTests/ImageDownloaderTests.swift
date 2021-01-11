@@ -6,12 +6,6 @@
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     final class ImageDownloaderTests: XCTestCase {
-        enum Fixtures {
-            static let anyImageURL = URL(string: "https://example.com/dot.png")!
-            static let anyImage = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==")!
-            static let anyResponse = Data(base64Encoded: "Z29uemFsZXpyZWFs")!
-        }
-
         private var cancellables = Set<AnyCancellable>()
 
         override func tearDownWithError() throws {
@@ -98,7 +92,7 @@
             { url in
                 Just(
                     (
-                        data: Fixtures.anyImage,
+                        data: Fixtures.anyImageResponse,
                         response: HTTPURLResponse(
                             url: url,
                             statusCode: 200,
