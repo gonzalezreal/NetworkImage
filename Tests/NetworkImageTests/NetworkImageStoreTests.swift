@@ -38,9 +38,9 @@
             XCTAssertEqual(
                 [
                     .notRequested,
-                    .failed,
+                    .failed(nil),
                     .loading(Fixtures.anyImageURL),
-                    .failed,
+                    .failed(nil),
                 ],
                 result
             )
@@ -101,7 +101,7 @@
                 [
                     .notRequested,
                     .loading(Fixtures.anyImageURL),
-                    .failed,
+                    .failed(Fixtures.anyImageURL),
                 ],
                 result
             )

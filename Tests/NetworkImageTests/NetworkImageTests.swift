@@ -28,6 +28,17 @@
             assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
         }
 
+        func testImageInVerticalStack() {
+            let view = VStack {
+                NetworkImage(url: Fixtures.anyImageURL)
+                    .scaledToFill()
+                    .frame(width: 300, height: 300)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
+        }
+
         func testEmptyPlaceholders() {
             struct TestView: View {
                 var body: some View {

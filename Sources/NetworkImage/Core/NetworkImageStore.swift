@@ -9,16 +9,18 @@
             case notRequested
             case loading(URL)
             case image(URL, OSImage)
-            case failed
+            case failed(URL?)
 
             var url: URL? {
                 switch self {
+                case .notRequested:
+                    return nil
                 case let .loading(url):
                     return url
                 case let .image(url, _):
                     return url
-                case .notRequested, .failed:
-                    return nil
+                case let .failed(url):
+                    return url
                 }
             }
         }
@@ -26,7 +28,7 @@
         enum Action {
             case onAppear(URL?)
             case didLoadImage(URL, OSImage)
-            case didFail
+            case didFail(URL?)
         }
 
         struct Environment {
@@ -70,22 +72,22 @@
         func send(_ action: Action) {
             switch action {
             case .onAppear(.none):
-                state = .failed
+                state = .failed(nil)
                 cancellable?.cancel()
             case let .onAppear(.some(url)):
                 guard url != state.url else { return }
                 state = .loading(url)
                 cancellable = environment.image(url)
                     .map { .didLoadImage(url, $0) }
-                    .replaceError(with: .didFail)
+                    .replaceError(with: .didFail(url))
                     .receive(on: environment.scheduler)
                     .sink(receiveValue: { [weak self] action in
                         self?.send(action)
                     })
             case let .didLoadImage(url, image):
                 state = .image(url, image)
-            case .didFail:
-                state = .failed
+            case let .didFail(url):
+                state = .failed(url)
             }
         }
     }
