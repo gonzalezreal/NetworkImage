@@ -65,7 +65,7 @@
     ///         func makeBody(configuration: Configuration) -> some View {
     ///             configuration.image
     ///                 .resizable()
-    ///                 .saturation(0.0)
+    ///                 .grayscale(0.99)
     ///         }
     ///     }
     ///
@@ -119,7 +119,10 @@
             Group {
                 switch store.state {
                 case .notRequested, .loading:
-                    placeholder
+                    // Make sure 'onAppear' gets called when the view is in a VStack
+                    // and Placeholder == EmptyView
+                    Color.clear
+                        .overlay(placeholder)
                 case let .image(_, osImage):
                     networkImageStyle.makeBody(
                         configuration: NetworkImageStyleConfiguration(

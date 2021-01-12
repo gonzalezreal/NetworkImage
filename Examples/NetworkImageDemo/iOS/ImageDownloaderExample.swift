@@ -1,16 +1,16 @@
-//: [Previous](@previous)
-
 import Combine
-import PlaygroundSupport
-import UIKit
-
 import NetworkImage
+import SwiftUI
 
-/*:
- For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
- */
+struct ImageDownloaderExampleView: UIViewControllerRepresentable {
+    func makeUIViewController(context _: Context) -> ImageDownloaderViewController {
+        ImageDownloaderViewController()
+    }
 
-class MyViewController: UIViewController {
+    func updateUIViewController(_: ImageDownloaderViewController, context _: Context) {}
+}
+
+class ImageDownloaderViewController: UIViewController {
     private lazy var imageView = UIImageView()
     private var cancellables: Set<AnyCancellable> = []
 
@@ -52,5 +52,3 @@ class MyViewController: UIViewController {
             .store(in: &cancellables)
     }
 }
-
-PlaygroundPage.current.liveView = MyViewController()
