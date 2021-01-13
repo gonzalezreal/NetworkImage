@@ -2,17 +2,6 @@
 
     import SwiftUI
 
-    /// Determines whether NetworkImage downloads images synchronously.
-    ///
-    /// If `false` (the default), NetworkImage downloads images asynchronously, without blocking the UI.
-    ///
-    /// If `true`, NetworkImage blocks the UI thread until image data is ready or an error occurs.
-    ///
-    /// - Note:
-    /// Set this property to `true` only for testing or purposes. Your app should always download
-    /// images **asynchronously** without blocking the UI thread.
-    public var isSynchronous = false
-
     /// A view that displays an image located at a given URL.
     ///
     /// A network image downloads and displays an image from a given URL; the download is asynchronous,
@@ -72,11 +61,8 @@
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
         @Environment(\.networkImageStyle) private var networkImageStyle
-        @StateObject private var store = NetworkImageStore(
-            environment: isSynchronous ? .synchronous : .asynchronous
-        )
+        @ObservedObject private var store: NetworkImageStore
 
-        private let url: URL?
         private let placeholder: Placeholder
         private let fallback: Fallback
 
@@ -90,9 +76,11 @@
             @ViewBuilder placeholder: () -> Placeholder,
             @ViewBuilder fallback: () -> Fallback
         ) {
-            self.url = url
-            self.placeholder = placeholder()
-            self.fallback = fallback()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: placeholder(),
+                fallback: fallback()
+            )
         }
 
         /// Creates a network image that displays a placeholder image while the image is loading or as a fallback.
@@ -100,9 +88,11 @@
         ///   - url: The URL where the image is located.
         ///   - placeholderImage: The name of the placeholder image resource.
         public init(url: URL?, placeholderImage name: String) where Placeholder == Image, Fallback == Image {
-            self.url = url
-            placeholder = Image(name)
-            fallback = Image(name)
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: Image(name),
+                fallback: Image(name)
+            )
         }
 
         /// Creates a network image that displays a placeholder system image while the image is loading or as a fallback.
@@ -110,31 +100,46 @@
         ///   - url: The URL where the image is located.
         ///   - placeholderSystemImage: The name of the system image that will be used as a placeholder.
         public init(url: URL?, placeholderSystemImage name: String) where Placeholder == Image, Fallback == Image {
-            self.url = url
-            placeholder = Image(systemName: name)
-            fallback = Image(systemName: name)
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: Image(systemName: name),
+                fallback: Image(systemName: name)
+            )
         }
 
         public var body: some View {
-            Group {
-                switch store.state {
-                case .notRequested, .loading:
-                    // Make sure 'onAppear' gets called when the view is in a VStack
-                    // and Placeholder == EmptyView
-                    Color.clear
-                        .overlay(placeholder)
-                case let .image(_, osImage):
-                    networkImageStyle.makeBody(
-                        configuration: NetworkImageStyleConfiguration(
-                            image: Image(osImage: osImage),
-                            size: osImage.size
-                        )
+            switch store.state {
+            case .placeholder:
+                Color.clear
+                    .overlay(placeholder)
+            case let .image(osImage):
+                networkImageStyle.makeBody(
+                    configuration: NetworkImageStyleConfiguration(
+                        image: Image(osImage: osImage),
+                        size: osImage.size
                     )
-                case .failed:
-                    fallback
-                }
+                )
+            case .fallback:
+                fallback
             }
-            .onAppear { store.send(.onAppear(url)) }
+        }
+
+        /// Configures this network image view to download its image synchronously.
+        ///
+        /// You should use this method only for testing or purposes. Your app should always download
+        /// images **asynchronously** without blocking the UI thread.
+        public func synchronous() -> NetworkImage {
+            NetworkImage(
+                store: store.synchronous(),
+                placeholder: placeholder,
+                fallback: fallback
+            )
+        }
+
+        private init(store: NetworkImageStore, placeholder: Placeholder, fallback: Fallback) {
+            self.store = store
+            self.placeholder = placeholder
+            self.fallback = fallback
         }
     }
 
@@ -143,9 +148,11 @@
         /// Creates a network image without placeholders.
         /// - Parameter url: The URL where the image is located.
         init(url: URL?) where Placeholder == EmptyView {
-            self.url = url
-            placeholder = EmptyView()
-            fallback = EmptyView()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: EmptyView(),
+                fallback: EmptyView()
+            )
         }
 
         /// Creates a network image that displays a custom placeholder while the image is loading.
@@ -153,9 +160,11 @@
         ///   - url: The URL where the image is located.
         ///   - placeholder: A view builder that creates the view to display while the image is loading.
         init(url: URL?, @ViewBuilder placeholder: () -> Placeholder) {
-            self.url = url
-            self.placeholder = placeholder()
-            fallback = EmptyView()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: placeholder(),
+                fallback: EmptyView()
+            )
         }
     }
 
@@ -166,9 +175,11 @@
         ///   - url: The URL where the image is located.
         ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
         init(url: URL?, @ViewBuilder fallback: () -> Fallback) {
-            self.url = url
-            self.fallback = fallback()
-            placeholder = EmptyView()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: EmptyView(),
+                fallback: fallback()
+            )
         }
 
         /// Creates a network image with a fallback image.
@@ -176,9 +187,11 @@
         ///   - url: The URL where the image is located.
         ///   - fallbackImage: The name of the image resource to display when the URL is `nil` or an error has occurred.
         init(url: URL?, fallbackImage name: String) where Fallback == Image {
-            self.url = url
-            fallback = Image(name)
-            placeholder = EmptyView()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: EmptyView(),
+                fallback: Image(name)
+            )
         }
 
         /// Creates a network image with a fallback system image.
@@ -187,9 +200,11 @@
         ///   - fallbackSystemImage: The name of the system image to display when the URL is `nil`
         ///     or an error has occurred.
         init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
-            self.url = url
-            fallback = Image(systemName: name)
-            placeholder = EmptyView()
+            self.init(
+                store: NetworkImageStore(url: url),
+                placeholder: EmptyView(),
+                fallback: Image(systemName: name)
+            )
         }
     }
 

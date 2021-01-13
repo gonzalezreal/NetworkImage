@@ -3,36 +3,16 @@
     import CombineSchedulers
     import Foundation
 
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     internal final class NetworkImageStore: ObservableObject {
         enum State: Equatable {
-            case notRequested
-            case loading(URL)
-            case image(URL, OSImage)
-            case failed(URL?)
-
-            var url: URL? {
-                switch self {
-                case .notRequested:
-                    return nil
-                case let .loading(url):
-                    return url
-                case let .image(url, _):
-                    return url
-                case let .failed(url):
-                    return url
-                }
-            }
-        }
-
-        enum Action {
-            case onAppear(URL?)
-            case didLoadImage(URL, OSImage)
-            case didFail(URL?)
+            case placeholder
+            case image(OSImage)
+            case fallback
         }
 
         struct Environment {
-            static let asynchronous = Environment(
+            static let `default` = Environment(
                 image: ImageDownloader.shared.image(for:),
                 scheduler: DispatchQueue.main.eraseToAnyScheduler()
             )
@@ -60,35 +40,27 @@
             }
         }
 
-        @Published private(set) var state: State = .notRequested
+        @Published private(set) var state: State
+        private let url: URL?
 
-        private let environment: Environment
-        private var cancellable: AnyCancellable?
+        init(url: URL?, environment: Environment = .default) {
+            self.url = url
 
-        init(environment: Environment) {
-            self.environment = environment
+            if let url = url {
+                state = .placeholder
+
+                environment.image(url)
+                    .map { .image($0) }
+                    .replaceError(with: .fallback)
+                    .receive(on: environment.scheduler)
+                    .assign(to: &$state)
+            } else {
+                state = .fallback
+            }
         }
 
-        func send(_ action: Action) {
-            switch action {
-            case .onAppear(.none):
-                state = .failed(nil)
-                cancellable?.cancel()
-            case let .onAppear(.some(url)):
-                guard url != state.url else { return }
-                state = .loading(url)
-                cancellable = environment.image(url)
-                    .map { .didLoadImage(url, $0) }
-                    .replaceError(with: .didFail(url))
-                    .receive(on: environment.scheduler)
-                    .sink(receiveValue: { [weak self] action in
-                        self?.send(action)
-                    })
-            case let .didLoadImage(url, image):
-                state = .image(url, image)
-            case let .didFail(url):
-                state = .failed(url)
-            }
+        func synchronous() -> NetworkImageStore {
+            NetworkImageStore(url: url, environment: .synchronous)
         }
     }
 #endif

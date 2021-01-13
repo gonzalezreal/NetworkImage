@@ -15,12 +15,9 @@
             private let platformName = "tvOS"
         #endif
 
-        override class func setUp() {
-            isSynchronous = true
-        }
-
         func testImage() {
             let view = NetworkImage(url: Fixtures.anyImageURL)
+                .synchronous()
                 .scaledToFill()
                 .frame(width: 300, height: 300)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -31,6 +28,7 @@
         func testImageInVerticalStack() {
             let view = VStack {
                 NetworkImage(url: Fixtures.anyImageURL)
+                    .synchronous()
                     .scaledToFill()
                     .frame(width: 300, height: 300)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -40,79 +38,103 @@
         }
 
         func testEmptyPlaceholders() {
-            struct TestView: View {
-                var body: some View {
-                    NetworkImage(url: Fixtures.invalidImageURL)
-                        .frame(width: 300, height: 300)
-                        .background(Color.yellow)
-                }
-            }
+            assertSnapshot(
+                matching: NetworkImage(url: Fixtures.invalidImageURL)
+                    .frame(width: 300, height: 300)
+                    .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "placeholder." + platformName
+            )
 
-            isSynchronous = false
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "placeholder." + platformName)
-
-            isSynchronous = true
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "fallback." + platformName)
+            assertSnapshot(
+                matching: NetworkImage(url: Fixtures.invalidImageURL)
+                    .synchronous()
+                    .frame(width: 300, height: 300)
+                    .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "fallback." + platformName
+            )
         }
 
         func testCustomPlaceholders() {
-            struct TestView: View {
-                var body: some View {
-                    NetworkImage(url: Fixtures.invalidImageURL) {
-                        ProgressView()
-                    } fallback: {
-                        Text("Failed!").padding()
-                    }
-                    .frame(width: 300, height: 300)
-                    .background(Color.yellow)
+            assertSnapshot(
+                matching: NetworkImage(url: Fixtures.invalidImageURL) {
+                    ProgressView()
+                } fallback: {
+                    Text("Failed!").padding()
                 }
-            }
+                .frame(width: 300, height: 300)
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "placeholder." + platformName
+            )
 
-            isSynchronous = false
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "placeholder." + platformName)
-
-            isSynchronous = true
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "fallback." + platformName)
+            assertSnapshot(
+                matching: NetworkImage(url: Fixtures.invalidImageURL) {
+                    ProgressView()
+                } fallback: {
+                    Text("Failed!").padding()
+                }
+                .synchronous()
+                .frame(width: 300, height: 300)
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "fallback." + platformName
+            )
         }
 
         func testPlaceholderImage() {
-            struct TestView: View {
-                var body: some View {
-                    NetworkImage(
-                        url: Fixtures.invalidImageURL,
-                        placeholderSystemImage: "photo.fill"
-                    )
-                    .frame(width: 300, height: 300)
-                    .foregroundColor(Color.primary.opacity(0.5))
-                    .background(Color.yellow)
-                }
-            }
+            assertSnapshot(
+                matching: NetworkImage(
+                    url: Fixtures.invalidImageURL,
+                    placeholderSystemImage: "photo.fill"
+                )
+                .frame(width: 300, height: 300)
+                .foregroundColor(Color.primary.opacity(0.5))
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "placeholder." + platformName
+            )
 
-            isSynchronous = false
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "placeholder." + platformName)
-
-            isSynchronous = true
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "fallback." + platformName)
+            assertSnapshot(
+                matching: NetworkImage(
+                    url: Fixtures.invalidImageURL,
+                    placeholderSystemImage: "photo.fill"
+                )
+                .synchronous()
+                .frame(width: 300, height: 300)
+                .foregroundColor(Color.primary.opacity(0.5))
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "fallback." + platformName
+            )
         }
 
         func testFallbackImage() {
-            struct TestView: View {
-                var body: some View {
-                    NetworkImage(
-                        url: Fixtures.invalidImageURL,
-                        fallbackSystemImage: "photo.fill"
-                    )
-                    .frame(width: 300, height: 300)
-                    .foregroundColor(Color.primary.opacity(0.5))
-                    .background(Color.yellow)
-                }
-            }
+            assertSnapshot(
+                matching: NetworkImage(
+                    url: Fixtures.invalidImageURL,
+                    fallbackSystemImage: "photo.fill"
+                )
+                .frame(width: 300, height: 300)
+                .foregroundColor(Color.primary.opacity(0.5))
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "placeholder." + platformName
+            )
 
-            isSynchronous = false
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "placeholder." + platformName)
-
-            isSynchronous = true
-            assertSnapshot(matching: TestView(), as: .image(layout: layout), named: "fallback." + platformName)
+            assertSnapshot(
+                matching: NetworkImage(
+                    url: Fixtures.invalidImageURL,
+                    fallbackSystemImage: "photo.fill"
+                )
+                .synchronous()
+                .frame(width: 300, height: 300)
+                .foregroundColor(Color.primary.opacity(0.5))
+                .background(Color.yellow),
+                as: .image(layout: layout),
+                named: "fallback." + platformName
+            )
         }
     }
 #endif

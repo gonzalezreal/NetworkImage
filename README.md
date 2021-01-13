@@ -139,16 +139,13 @@ For other use cases outside the scope of SwiftUI, you can download images direct
 ```
 
 ### NetworkImage and Snapshot Testing
-If you use snapshot testing to test your views, you may need NetworkImage to operate **synchronously** during testing, avoiding the use of expectations or waits. To download images synchronously, blocking the UI thread, set the global property `isSynchronous` to `true`. The following example shows how to use this feature with Point-Free's [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
+If you use snapshot testing to test your views, you may need NetworkImage to operate **synchronously** during testing, avoiding the use of expectations or waits. To configure a network image view to download its image synchronously, blocking the UI thread,  use the `synchronous()` method. The following example shows how to use this feature with Point-Free's [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
 
 ```swift
 final class MyTests: XCTestCase {
-    override class func setUp() {
-        isSynchronous = true
-    }
-    
     func testImage() {
         let view = NetworkImage(url: fixtureURL("image.jpg"))
+            .synchronous() // download the image synchronously
             .scaledToFill()
             .frame(width: 300, height: 300)
             .clipShape(RoundedRectangle(cornerRadius: 8))
