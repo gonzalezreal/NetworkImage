@@ -14,7 +14,7 @@
             cancellables.removeAll()
         }
 
-        func testDidSetURLToNil() {
+        func testOnAppearNil() {
             // given
             let sut = NetworkImageStore(
                 environment: NetworkImageStore.Environment(
@@ -46,7 +46,7 @@
             )
         }
 
-        func testDidSetURL() {
+        func testOnAppear() {
             // given
             let sut = NetworkImageStore(
                 environment: NetworkImageStore.Environment(
