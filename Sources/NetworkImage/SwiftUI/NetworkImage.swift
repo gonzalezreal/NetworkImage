@@ -15,10 +15,10 @@
 
     /// A view that displays an image located at a given URL.
     ///
-    /// A network image downloads and displays an image from a given URL.
-    /// The download is asynchronous, and the result is cached both in disk and memory.
+    /// A network image downloads and displays an image from a given URL; the download is asynchronous,
+    /// and the result is cached both in disk and memory.
     ///
-    /// You create a network image, in its simplest form, by providing the URL where the image is located.
+    /// You create a network image, in its simplest form, by providing the image URL.
     ///
     ///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
     ///
@@ -48,8 +48,8 @@
     ///
     /// You can customize the appearance of network images by creating styles that conform to the
     /// `NetworkImageStyle` protocol. To set a specific style for all network images within a view, use
-    /// the `networkImageStyle(_:)` modifier. In the following example, a custom style desaturates
-    /// all the network image views within the enclosing `VStack`:
+    /// the `networkImageStyle(_:)` modifier. In the following example, a custom style adds a grayscale
+    /// effect to all the network image views within the enclosing `VStack`:
     ///
     ///     struct ContentView: View {
     ///         var body: some View {

@@ -6,15 +6,7 @@
 
 NetworkImage is a Swift µpackage that provides image downloading, caching, and displaying for your SwiftUI apps. It leverages the foundation URLCache, providing persistent and in-memory caches.
 
-You can explore all the capabilities of this package in the [companion playground](/Playgrounds/NetworkImage.playground).
-
-* [Supported Platforms](#supported-platforms)
-* [Displaying Network Images](#displaying-network-images)
-* [Customizing Network Images](#customizing-network-images)
-* [Creating Custom Image Styles](#creating-custom-image-styles)
-* [Using the Shared ImageDownloader](#using-the-shared-imageDownloader)
-* [Installation](#installation)
-* [Other Libraries](#other-libraries)
+You can explore all the capabilities of this package in the [companion demo project](Examples/NetworkImageDemo).
 
 ## Supported Platforms
 
@@ -32,90 +24,74 @@ The `ImageDownloader` is available in:
 * tvOS 13.0+
 * watchOS 6.0+
 
-## Displaying Network Images
-You can use a `NetworkImage` view to display an image from a given URL. The download happens asynchronously, and the resulting image is cached both in disk and memory.
+## Usage
+A network image downloads and displays an image from a given URL; the download is asynchronous, and the result is cached both in disk and memory.
+
+You create a network image, in its simplest form, by providing the image URL.
+
+```swift
+NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+    .scaledToFit()
+```
+
+You can also provide the name of a placeholder image that the view will display while the image is loading or, as a fallback, if an error occurs or the URL is `nil`.
+
+```swift
+NetworkImage(
+    url: URL(string: "https://picsum.photos/id/237/300/200"),
+    placeholderSystemImage: "photo.fill"
+)
+.scaledToFit()
+```
+
+If you want, you can only provide a fallback image. A network image view only displays this image if an error occurs or when the URL is `nil`.
+
+```swift
+NetworkImage(
+    url: URL(string: "https://picsum.photos/id/237/300/200"),
+    fallbackSystemImage: "photo.fill"
+)
+.scaledToFit()
+```
+
+It is also possible to create network images using views to compose the network image's placeholders programmatically.
+
+```swift
+NetworkImage(url: movie.posterURL) {
+    ProgressView()
+} fallback: {
+    Text(movie.title)
+        .padding()
+}
+.scaledToFit()
+```
+
+### Styling Network Images
+You can customize the appearance of network images by creating styles that conform to the `NetworkImageStyle` protocol. To set a specific style for all network images within a view, use the `networkImageStyle(_:)` modifier. In the following example, a custom style adds a grayscale effect to all the network image views within the enclosing `VStack`:
 
 ```swift
 struct ContentView: View {
     var body: some View {
-        NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
-            .frame(width: 300, height: 200)
-    }
-}
-```
-
-By default, remote images are resizable and fill the available space while maintaining the aspect ratio.
-
-## Customizing Network Images
-You can customize a network image's appearance by using a network image style. The default image style is an instance of `ResizableNetworkImageStyle` configured to `fill` the available space. To set a specific style for all network images within a view, you can use the `networkImageStyle(_:)` modifier.
-
-```swift
-struct ContentView: View {
-    var body: some View {
-        HStack {
-            NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
-                .frame(width: 200, height: 200)
-            NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
-                .frame(width: 200, height: 200)
-        }
-        .networkImageStyle(
-            ResizableNetworkImageStyle(
-                backgroundColor: .yellow,
-                contentMode: .fit
-            )
-        )
-    }
-}
-```
-
-## Creating Custom Image Styles
-To add a custom appearance, create a type that conforms to the `NetworkImageStyle` protocol. You can customize a network image's appearance in all of its different states: loading, displaying an image or failed.
-
-```swift
-struct RoundedImageStyle: NetworkImageStyle {
-    var width: CGFloat?
-    var height: CGFloat?
-
-    func makeBody(state: NetworkImageState) -> some View {
-        ZStack {
-            Color(.secondarySystemBackground)
-
-            switch state {
-            case .loading:
-                EmptyView()
-            case let .image(image, _):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .failed:
-                Image(systemName: "photo")
-                    .foregroundColor(Color(.systemFill))
-            }
-        }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 5))
-    }
-}
-```
-
-Then set the custom style for all network images within a view, using the `networkImageStyle(_:)` modifier:
-
-```swift
-struct ContentView: View {
-    var body: some View {
-        HStack {
+        VStack {
             NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
             NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
         }
-        .networkImageStyle(
-            RoundedImageStyle(width: 200, height: 200)
-        )
+        .networkImageStyle(GrayscaleNetworkImageStyle())
+    }
+}
+
+struct GrayscaleNetworkImageStyle: NetworkImageStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.image
+            .resizable()
+            .scaledToFit()
+            .grayscale(0.99)
     }
 }
 ```
 
-## Using the Shared ImageDownloader
-For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. Here you can see an example of a view controller that downloads an image and applies a transformation to it.
+### Using ImageDownloader
+For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. In the following example, a view controller downloads an image and applies a transformation to it:
   
   ```swift
   class MyViewController: UIViewController {
@@ -152,7 +128,7 @@ For other use cases outside the scope of SwiftUI, you can download images direct
                       UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
                   }
               }
-              .replaceError(with: UIImage(systemName: "film")!)
+              .replaceError(with: UIImage(systemName: "photo.fill")!)
               .receive(on: DispatchQueue.main)
               .sink(receiveValue: { [imageView] image in
                   imageView.image = image
@@ -161,6 +137,34 @@ For other use cases outside the scope of SwiftUI, you can download images direct
       }
   }
 ```
+
+### NetworkImage and Snapshot Testing
+If you use snapshot testing to test your views, you may need NetworkImage to operate **synchronously** during testing, avoiding the use of expectations or waits. To download images synchronously, blocking the UI thread, set the global property `isSynchronous` to `true`. The following example shows how to use this feature with Point-Free's [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
+
+```swift
+final class MyTests: XCTestCase {
+    override class func setUp() {
+        isSynchronous = true
+    }
+    
+    func testImage() {
+        let view = NetworkImage(url: fixtureURL("image.jpg"))
+            .scaledToFill()
+            .frame(width: 300, height: 300)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+        assertSnapshot(matching: view, as: .image(layout: .device(config: .iPhoneSe)))
+    }
+}
+```
+
+With the default (asynchronous) behavior, we would have needed to introduce a wait, which would make our test slower.
+
+```swift
+assertSnapshot(matching: view, as: .wait(for: 0.25, on: .image(layout: .device(config: .iPhoneSe))))
+```
+
+Make sure you only use this feature in your tests and not in production code. Production code must always download images **asynchronously**.
 
 ## Installation
 You can add NetworkImage to an Xcode project by adding it as a package dependency.

@@ -44,7 +44,7 @@ class ImageDownloaderViewController: UIViewController {
                     UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
                 }
             }
-            .replaceError(with: UIImage(systemName: "film")!)
+            .replaceError(with: UIImage(systemName: "photo.fill")!)
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [imageView] image in
                 imageView.image = image
