@@ -126,7 +126,7 @@
 
         /// Configures this network image view to download its image synchronously.
         ///
-        /// You should use this method only for testing or purposes. Your app should always download
+        /// You should use this method only for testing purposes. Your app should always download
         /// images **asynchronously** without blocking the UI thread.
         public func synchronous() -> NetworkImage {
             NetworkImage(
