@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "NetworkImage", targets: ["NetworkImage"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.1.2"),
+        .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.0"),
         .package(
             name: "SnapshotTesting",
             url: "https://github.com/pointfreeco/swift-snapshot-testing",
