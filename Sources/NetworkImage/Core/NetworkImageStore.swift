@@ -25,7 +25,7 @@
                     .publisher
                     .eraseToAnyPublisher()
                 },
-                scheduler: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+                scheduler: .immediate
             )
 
             let image: (URL) -> AnyPublisher<OSImage, Error>

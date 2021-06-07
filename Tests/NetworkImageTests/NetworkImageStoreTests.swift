@@ -7,7 +7,7 @@
 
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     final class NetworkImageStoreTests: XCTestCase {
-        private let scheduler = DispatchQueue.testScheduler
+        private let scheduler = DispatchQueue.test
         private var cancellables = Set<AnyCancellable>()
 
         private var successfulImage: (URL?) -> AnyPublisher<OSImage, Error> {
