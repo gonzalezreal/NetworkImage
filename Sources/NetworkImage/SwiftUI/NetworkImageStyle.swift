@@ -1,5 +1,4 @@
 #if canImport(SwiftUI)
-
     import SwiftUI
 
     /// A type that applies a custom appearance to all network images within a view hierarchy.
@@ -69,5 +68,4 @@
     private struct NetworkImageStyleKey: EnvironmentKey {
         static let defaultValue = AnyNetworkImageStyle(ResizableNetworkImageStyle())
     }
-
 #endif

@@ -10,9 +10,9 @@ struct ExampleList: View {
 
             #if os(iOS)
                 NavigationLink(
-                    "Using ImageDownloader",
-                    destination: ImageDownloaderExampleView()
-                        .navigationTitle("Using ImageDownloader")
+                    "UIKit (NetworkImageLoader)",
+                    destination: ImageLoaderExampleView()
+                        .navigationTitle("UIKit (NetworkImageLoader)")
                         .navigationBarTitleDisplayMode(.inline)
                 )
             #endif
