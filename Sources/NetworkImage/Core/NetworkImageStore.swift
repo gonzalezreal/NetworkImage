@@ -3,6 +3,12 @@
     import CombineSchedulers
     import Foundation
 
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    internal struct NetworkImageEnvironment {
+        var imageLoader: NetworkImageLoader
+        var mainQueue: AnySchedulerOf<DispatchQueue>
+    }
+
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
     internal final class NetworkImageStore: ObservableObject {
         enum State: Equatable {
@@ -11,56 +17,20 @@
             case fallback
         }
 
-        struct Environment {
-            static let `default` = Environment(
-                image: ImageDownloader.shared.image(for:),
-                scheduler: DispatchQueue.main.eraseToAnyScheduler()
-            )
-
-            static let synchronous = Environment(
-                image: { url in
-                    Result {
-                        try decodeImage(from: Data(contentsOf: url))
-                    }
-                    .publisher
-                    .eraseToAnyPublisher()
-                },
-                scheduler: .immediate
-            )
-
-            let image: (URL) -> AnyPublisher<OSImage, Error>
-            let scheduler: AnySchedulerOf<DispatchQueue>
-
-            init(
-                image: @escaping (URL) -> AnyPublisher<OSImage, Error>,
-                scheduler: AnySchedulerOf<DispatchQueue>
-            ) {
-                self.image = image
-                self.scheduler = scheduler
-            }
-        }
-
         @Published private(set) var state: State
-        private let url: URL?
 
-        init(url: URL?, environment: Environment = .default) {
-            self.url = url
-
+        init(url: URL?, environment: NetworkImageEnvironment) {
             if let url = url {
                 state = .placeholder
 
-                environment.image(url)
+                environment.imageLoader.image(for: url)
                     .map { .image($0) }
                     .replaceError(with: .fallback)
-                    .receive(on: environment.scheduler)
+                    .receive(on: environment.mainQueue)
                     .assign(to: &$state)
             } else {
                 state = .fallback
             }
-        }
-
-        func synchronous() -> NetworkImageStore {
-            NetworkImageStore(url: url, environment: .synchronous)
         }
     }
 #endif

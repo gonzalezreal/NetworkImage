@@ -1,5 +1,4 @@
 #if canImport(SwiftUI)
-
     import SwiftUI
 
     /// A network image style that applies the `resizable()` modifier to the image.
@@ -19,5 +18,4 @@
             configuration.image.resizable()
         }
     }
-
 #endif

@@ -13,7 +13,7 @@ struct SimpleExampleView: View {
                 .frame(width: 200, height: 200)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .animation(.default)
+//        .animation(.default)
         .navigationTitle("Displaying Network Images")
     }
 

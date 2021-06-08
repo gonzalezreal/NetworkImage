@@ -2,15 +2,15 @@ import Combine
 import NetworkImage
 import SwiftUI
 
-struct ImageDownloaderExampleView: UIViewControllerRepresentable {
-    func makeUIViewController(context _: Context) -> ImageDownloaderViewController {
-        ImageDownloaderViewController()
+struct ImageLoaderExampleView: UIViewControllerRepresentable {
+    func makeUIViewController(context _: Context) -> ImageLoaderViewController {
+        ImageLoaderViewController()
     }
 
-    func updateUIViewController(_: ImageDownloaderViewController, context _: Context) {}
+    func updateUIViewController(_: ImageLoaderViewController, context _: Context) {}
 }
 
-class ImageDownloaderViewController: UIViewController {
+class ImageLoaderViewController: UIViewController {
     private lazy var imageView = UIImageView()
     private var cancellables: Set<AnyCancellable> = []
 
@@ -35,7 +35,7 @@ class ImageDownloaderViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        ImageDownloader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
+        NetworkImageLoader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
             .map { image in
                 // tint the image with a yellow color
                 UIGraphicsImageRenderer(size: image.size).image { _ in

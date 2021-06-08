@@ -17,7 +17,7 @@ You can use the `NetworkImage` SwiftUI view in the following platforms:
 * tvOS 14.0+
 * watchOS 7.0+
 
-The `ImageDownloader` is available in: 
+The `NetworkImageLoader` is available in: 
 
 * macOS 10.15+
 * iOS 13.0+
@@ -90,8 +90,8 @@ struct GrayscaleNetworkImageStyle: NetworkImageStyle {
 }
 ```
 
-### Using ImageDownloader
-For other use cases outside the scope of SwiftUI, you can download images directly using the shared `ImageDownloader`. In the following example, a view controller downloads an image and applies a transformation to it:
+### Using NetworkImageLoader
+For other use cases outside the scope of SwiftUI, you can download images directly using the shared `NetworkImageLoader`. In the following example, a view controller downloads an image and applies a transformation to it:
   
   ```swift
   class MyViewController: UIViewController {
@@ -119,7 +119,7 @@ For other use cases outside the scope of SwiftUI, you can download images direct
       override func viewDidLoad() {
           super.viewDidLoad()
 
-          ImageDownloader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
+          NetworkImageLoader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
               .map { image in
                   // tint the image with a yellow color
                   UIGraphicsImageRenderer(size: image.size).image { _ in
@@ -138,30 +138,58 @@ For other use cases outside the scope of SwiftUI, you can download images direct
   }
 ```
 
-### NetworkImage and Snapshot Testing
-If you use snapshot testing to test your views, you may need NetworkImage to operate **synchronously** during testing, avoiding the use of expectations or waits. To configure a network image view to download its image synchronously, blocking the UI thread,  use the `synchronous()` method. The following example shows how to use this feature with Point-Free's [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
+### NetworkImage and Testing
+NetworkImage is implemented with testing in mind and provides view modifiers to stub image responses and replace the scheduler that drives the view state changes. This allows you to write synchronous tests, avoiding the use of expectations or waits. The following example shows how to use this feature with Point-Free's [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
 
 ```swift
 final class MyTests: XCTestCase {
     func testImage() {
-        let view = NetworkImage(url: fixtureURL("image.jpg"))
-            .synchronous() // download the image synchronously
+        let view = NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")!)
             .scaledToFill()
             .frame(width: 300, height: 300)
             .clipShape(RoundedRectangle(cornerRadius: 8))
-
+            // Stub a badServerResponse error
+            .networkImageLoader(
+                .mock(response: Fail(error: URLError(.badServerResponse) as Error))
+            )
+            // Schedule state changes immediately
+            .networkImageScheduler(.immediate)
+        
         assertSnapshot(matching: view, as: .image(layout: .device(config: .iPhoneSe)))
     }
 }
 ```
 
-With the default (asynchronous) behavior, we would have needed to introduce a wait, which would make our test slower.
+### Animations
+NetworkImage performs an explicit `.default` animation when its state changes, using a [Combine Scheduler](https://developer.apple.com/documentation/combine/scheduler). You can override this scheduler and adjust the animation with the `networkImageScheduler(_:)` view modifier.
 
 ```swift
-assertSnapshot(matching: view, as: .wait(for: 0.25, on: .image(layout: .device(config: .iPhoneSe))))
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
+            NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+        }
+        .networkImageScheduler(.main.animation(.easeIn(duration: 0.25)))
+    }
+}
 ```
 
-Make sure you only use this feature in your tests and not in production code. Production code must always download images **asynchronously**.
+If you want to disable animations in NetworkImage, simply pass `.main` to the `.networkImageScheduler` view modifier.
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
+            NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+        }
+        .networkImageScheduler(.main)
+    }
+}
+```
+
+Make sure that you always use the `main` scheduler for network image state changes in your production code. 
 
 ## Installation
 You can add NetworkImage to an Xcode project by adding it as a package dependency.

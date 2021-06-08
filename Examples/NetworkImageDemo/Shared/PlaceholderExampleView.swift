@@ -31,7 +31,7 @@ struct PlaceholderExampleView: View {
             .background(Color.secondary.opacity(0.25))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-        .animation(.default)
+//        .animation(.default)
         .navigationTitle("Placeholders and fallbacks")
     }
 
