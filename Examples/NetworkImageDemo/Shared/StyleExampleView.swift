@@ -11,7 +11,6 @@ struct StyleExampleView: View {
                 .frame(width: 200, height: 200)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
-//        .animation(.default)
         .networkImageStyle(GrayscaleNetworkImageStyle())
         .navigationTitle("Styling Network Images")
     }
