@@ -7,6 +7,7 @@
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public struct NetworkImageLoader {
         private let _image: (URL) -> AnyPublisher<OSImage, Error>
+        private let _cachedImage: (URL) -> OSImage?
 
         /// Creates an image loader.
         /// - Parameters:
@@ -17,37 +18,51 @@
         }
 
         init(urlLoader: URLLoader, imageCache: NetworkImageCache) {
-            self.init { url in
-                if let image = imageCache.image(for: url) {
-                    return Just(image)
-                        .setFailureType(to: Error.self)
-                        .eraseToAnyPublisher()
-                } else {
-                    return urlLoader.dataTaskPublisher(for: url)
-                        .tryMap { data, response in
-                            if let httpResponse = response as? HTTPURLResponse {
-                                guard 200 ..< 300 ~= httpResponse.statusCode else {
-                                    throw NetworkImageError.badStatus(httpResponse.statusCode)
+            self.init(
+                image: { url in
+                    if let image = imageCache.image(for: url) {
+                        return Just(image)
+                            .setFailureType(to: Error.self)
+                            .eraseToAnyPublisher()
+                    } else {
+                        return urlLoader.dataTaskPublisher(for: url)
+                            .tryMap { data, response in
+                                if let httpResponse = response as? HTTPURLResponse {
+                                    guard 200 ..< 300 ~= httpResponse.statusCode else {
+                                        throw NetworkImageError.badStatus(httpResponse.statusCode)
+                                    }
                                 }
-                            }
 
-                            return try decodeImage(from: data)
-                        }
-                        .handleEvents(receiveOutput: { image in
-                            imageCache.setImage(image, for: url)
-                        })
-                        .eraseToAnyPublisher()
+                                return try decodeImage(from: data)
+                            }
+                            .handleEvents(receiveOutput: { image in
+                                imageCache.setImage(image, for: url)
+                            })
+                            .eraseToAnyPublisher()
+                    }
+                },
+                cachedImage: { url in
+                    imageCache.image(for: url)
                 }
-            }
+            )
         }
 
-        init(image: @escaping (URL) -> AnyPublisher<OSImage, Error>) {
+        init(
+            image: @escaping (URL) -> AnyPublisher<OSImage, Error>,
+            cachedImage: @escaping (URL) -> OSImage?
+        ) {
             _image = image
+            _cachedImage = cachedImage
         }
 
         /// Returns a publisher that loads an image for a given URL.
         public func image(for url: URL) -> AnyPublisher<OSImage, Error> {
             _image(url)
+        }
+
+        /// Returns the cached image for a given URL if there is any.
+        public func cachedImage(for url: URL) -> OSImage? {
+            _cachedImage(url)
         }
     }
 
@@ -73,13 +88,19 @@
                     }
 
                     return response.eraseToAnyPublisher()
+                } cachedImage: { _ in
+                    nil
                 }
             }
 
             static func mock<P>(
                 response: P
             ) -> Self where P: Publisher, P.Output == OSImage, P.Failure == Error {
-                Self { _ in response.eraseToAnyPublisher() }
+                Self { _ in
+                    response.eraseToAnyPublisher()
+                } cachedImage: { _ in
+                    nil
+                }
             }
 
             static var failing: Self {
@@ -88,6 +109,8 @@
                     return Just(OSImage())
                         .setFailureType(to: Error.self)
                         .eraseToAnyPublisher()
+                } cachedImage: { _ in
+                    nil
                 }
             }
         }

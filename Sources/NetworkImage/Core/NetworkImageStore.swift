@@ -21,13 +21,17 @@
 
         init(url: URL?, environment: NetworkImageEnvironment) {
             if let url = url {
-                state = .placeholder
+                if let image = environment.imageLoader.cachedImage(for: url) {
+                    state = .image(image)
+                } else {
+                    state = .placeholder
 
-                environment.imageLoader.image(for: url)
-                    .map { .image($0) }
-                    .replaceError(with: .fallback)
-                    .receive(on: environment.mainQueue)
-                    .assign(to: &$state)
+                    environment.imageLoader.image(for: url)
+                        .map { .image($0) }
+                        .replaceError(with: .fallback)
+                        .receive(on: environment.mainQueue)
+                        .assign(to: &$state)
+                }
             } else {
                 state = .fallback
             }

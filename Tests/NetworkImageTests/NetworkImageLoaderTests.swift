@@ -46,6 +46,7 @@
             // then
             let unwrappedResult = try XCTUnwrap(result)
             XCTAssertTrue(unwrappedResult.isEqual(imageCache.image(for: Fixtures.anyImageURL)))
+            XCTAssertTrue(unwrappedResult.isEqual(imageLoader.cachedImage(for: Fixtures.anyImageURL)))
         }
 
         func testImageReturnsCachedImageIfAvailable() throws {
