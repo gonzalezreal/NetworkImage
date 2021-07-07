@@ -15,19 +15,23 @@
 
         func testNilURLReturnsFallback() {
             // given
-            let store = NetworkImageStore(
-                url: nil,
-                environment: NetworkImageEnvironment(
-                    imageLoader: .failing,
-                    mainQueue: .immediate
-                )
-            )
+            let store = NetworkImageStore(url: nil)
 
             var result: [NetworkImageStore.State] = []
 
             store.$state
                 .sink { result.append($0) }
                 .store(in: &cancellables)
+
+            // when
+            store.send(
+                .onAppear(
+                    environment: .init(
+                        imageLoader: .failing,
+                        mainQueue: .immediate
+                    )
+                )
+            )
 
             // then
             XCTAssertEqual([.fallback], result)
@@ -36,18 +40,7 @@
         func testValidURLReturnsImage() {
             // given
             let scheduler = DispatchQueue.test
-            let store = NetworkImageStore(
-                url: Fixtures.anyImageURL,
-                environment: NetworkImageEnvironment(
-                    imageLoader: .mock(
-                        url: Fixtures.anyImageURL,
-                        withResponse: Just(Fixtures.anyImage)
-                            .setFailureType(to: Error.self)
-                            .delay(for: .seconds(1), scheduler: scheduler)
-                    ),
-                    mainQueue: scheduler.eraseToAnyScheduler()
-                )
-            )
+            let store = NetworkImageStore(url: Fixtures.anyImageURL)
             var result: [NetworkImageStore.State] = []
 
             store.$state
@@ -55,11 +48,25 @@
                 .store(in: &cancellables)
 
             // when
+            store.send(
+                .onAppear(
+                    environment: .init(
+                        imageLoader: .mock(
+                            url: Fixtures.anyImageURL,
+                            withResponse: Just(Fixtures.anyImage)
+                                .setFailureType(to: Error.self)
+                                .delay(for: .seconds(1), scheduler: scheduler)
+                        ),
+                        mainQueue: scheduler.eraseToAnyScheduler()
+                    )
+                )
+            )
             scheduler.advance(by: .seconds(1))
 
             // then
             XCTAssertEqual(
                 [
+                    .notRequested(Fixtures.anyImageURL),
                     .placeholder,
                     .image(Fixtures.anyImage),
                 ],
@@ -70,17 +77,7 @@
         func testFailingURLReturnsFallback() {
             // given
             let scheduler = DispatchQueue.test
-            let store = NetworkImageStore(
-                url: Fixtures.anyImageURL,
-                environment: NetworkImageEnvironment(
-                    imageLoader: .mock(
-                        url: Fixtures.anyImageURL,
-                        withResponse: Fail(error: Fixtures.anyError as Error)
-                            .delay(for: .seconds(1), scheduler: scheduler)
-                    ),
-                    mainQueue: scheduler.eraseToAnyScheduler()
-                )
-            )
+            let store = NetworkImageStore(url: Fixtures.anyImageURL)
             var result: [NetworkImageStore.State] = []
 
             store.$state
@@ -88,11 +85,24 @@
                 .store(in: &cancellables)
 
             // when
+            store.send(
+                .onAppear(
+                    environment: .init(
+                        imageLoader: .mock(
+                            url: Fixtures.anyImageURL,
+                            withResponse: Fail(error: Fixtures.anyError as Error)
+                                .delay(for: .seconds(1), scheduler: scheduler)
+                        ),
+                        mainQueue: scheduler.eraseToAnyScheduler()
+                    )
+                )
+            )
             scheduler.advance(by: .seconds(1))
 
             // then
             XCTAssertEqual(
                 [
+                    .notRequested(Fixtures.anyImageURL),
                     .placeholder,
                     .fallback,
                 ],

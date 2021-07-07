@@ -5,7 +5,7 @@
     ///
     /// To configure the current network image style for a view hierarchy, use the `networkImageStyle(_:)`
     /// modifier and specify a style that conforms to `NetworkImageStyle`.
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public protocol NetworkImageStyle {
         /// A view that represents the body of a network image.
         associatedtype Body: View
@@ -24,7 +24,7 @@
     }
 
     /// The properties of a network image view instance.
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public struct NetworkImageStyleConfiguration {
         /// The image presented by the network image view.
         public var image: Image
@@ -33,7 +33,7 @@
         public var size: CGSize
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public extension View {
         /// Sets the style for network images within this view.
         func networkImageStyle<S>(_ networkImageStyle: S) -> some View where S: NetworkImageStyle {
@@ -41,7 +41,7 @@
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     struct AnyNetworkImageStyle: NetworkImageStyle {
         private let _makeBody: (Configuration) -> AnyView
 
@@ -56,7 +56,7 @@
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension EnvironmentValues {
         var networkImageStyle: AnyNetworkImageStyle {
             get { self[NetworkImageStyleKey.self] }
@@ -64,7 +64,7 @@
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private struct NetworkImageStyleKey: EnvironmentKey {
         static let defaultValue = AnyNetworkImageStyle(ResizableNetworkImageStyle())
     }
