@@ -10,14 +10,7 @@ You can explore all the capabilities of this package in the [companion demo proj
 
 ## Supported Platforms
 
-You can use the `NetworkImage` SwiftUI view in the following platforms:
-
-* macOS 11.0+
-* iOS 14.0+
-* tvOS 14.0+
-* watchOS 7.0+
-
-The `NetworkImageLoader` is available in: 
+You can use `NetworkImage` in the following platforms:
 
 * macOS 10.15+
 * iOS 13.0+
