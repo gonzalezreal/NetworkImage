@@ -58,13 +58,13 @@
     ///         }
     ///     }
     ///
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
         @Environment(\.networkImageStyle) private var imageStyle
         @Environment(\.networkImageLoader) private var imageLoader
         @Environment(\.networkImageScheduler) private var imageScheduler
 
-        private let url: URL?
+        @ObservedObject private var store: NetworkImageStore
         private let placeholder: Placeholder
         private let fallback: Fallback
 
@@ -78,7 +78,7 @@
             @ViewBuilder placeholder: () -> Placeholder,
             @ViewBuilder fallback: () -> Fallback
         ) {
-            self.url = url
+            store = NetworkImageStore(url: url)
             self.placeholder = placeholder()
             self.fallback = fallback()
         }
@@ -88,7 +88,7 @@
         ///   - url: The URL where the image is located.
         ///   - placeholderImage: The name of the placeholder image resource.
         public init(url: URL?, placeholderImage name: String) where Placeholder == Image, Fallback == Image {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = Image(name)
             fallback = Image(name)
         }
@@ -97,34 +97,47 @@
         /// - Parameters:
         ///   - url: The URL where the image is located.
         ///   - placeholderSystemImage: The name of the system image that will be used as a placeholder.
+        @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
         public init(url: URL?, placeholderSystemImage name: String) where Placeholder == Image, Fallback == Image {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = Image(systemName: name)
             fallback = Image(systemName: name)
         }
 
         public var body: some View {
-            PrimitiveNetworkImage(
-                store: NetworkImageStore(
-                    url: url,
-                    environment: NetworkImageEnvironment(
-                        imageLoader: imageLoader,
-                        mainQueue: imageScheduler
+            switch store.state {
+            case .notRequested, .placeholder:
+                Color.clear
+                    .overlay(placeholder)
+                    .onAppear {
+                        store.send(
+                            .onAppear(
+                                environment: .init(
+                                    imageLoader: imageLoader,
+                                    mainQueue: imageScheduler
+                                )
+                            )
+                        )
+                    }
+            case let .image(osImage):
+                imageStyle.makeBody(
+                    configuration: NetworkImageStyleConfiguration(
+                        image: Image(osImage: osImage),
+                        size: osImage.size
                     )
-                ),
-                imageStyle: imageStyle,
-                placeholder: placeholder,
-                fallback: fallback
-            )
+                )
+            case .fallback:
+                fallback
+            }
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public extension NetworkImage where Fallback == EmptyView {
         /// Creates a network image without placeholders.
         /// - Parameter url: The URL where the image is located.
         init(url: URL?) where Placeholder == EmptyView {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = EmptyView()
             fallback = EmptyView()
         }
@@ -134,20 +147,20 @@
         ///   - url: The URL where the image is located.
         ///   - placeholder: A view builder that creates the view to display while the image is loading.
         init(url: URL?, @ViewBuilder placeholder: () -> Placeholder) {
-            self.url = url
+            store = NetworkImageStore(url: url)
             self.placeholder = placeholder()
             fallback = EmptyView()
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public extension NetworkImage where Placeholder == EmptyView {
         /// Creates a network image with a fallback view.
         /// - Parameters:
         ///   - url: The URL where the image is located.
         ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
         init(url: URL?, @ViewBuilder fallback: () -> Fallback) {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = EmptyView()
             self.fallback = fallback()
         }
@@ -157,7 +170,7 @@
         ///   - url: The URL where the image is located.
         ///   - fallbackImage: The name of the image resource to display when the URL is `nil` or an error has occurred.
         init(url: URL?, fallbackImage name: String) where Fallback == Image {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = EmptyView()
             fallback = Image(name)
         }
@@ -167,14 +180,15 @@
         ///   - url: The URL where the image is located.
         ///   - fallbackSystemImage: The name of the system image to display when the URL is `nil`
         ///     or an error has occurred.
+        @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
         init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
-            self.url = url
+            store = NetworkImageStore(url: url)
             placeholder = EmptyView()
             fallback = Image(systemName: name)
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public extension View {
         #if DEBUG
             /// Sets the image loader for network images within this view.
@@ -189,46 +203,8 @@
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-    internal struct PrimitiveNetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
-        @ObservedObject private var store: NetworkImageStore
-
-        private let imageStyle: AnyNetworkImageStyle
-        private let placeholder: Placeholder
-        private let fallback: Fallback
-
-        init(
-            store: NetworkImageStore,
-            imageStyle: AnyNetworkImageStyle,
-            placeholder: Placeholder,
-            fallback: Fallback
-        ) {
-            self.store = store
-            self.imageStyle = imageStyle
-            self.placeholder = placeholder
-            self.fallback = fallback
-        }
-
-        var body: some View {
-            switch store.state {
-            case .placeholder:
-                Color.clear
-                    .overlay(placeholder)
-            case let .image(osImage):
-                imageStyle.makeBody(
-                    configuration: NetworkImageStyleConfiguration(
-                        image: Image(osImage: osImage),
-                        size: osImage.size
-                    )
-                )
-            case .fallback:
-                fallback
-            }
-        }
-    }
-
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-    internal extension EnvironmentValues {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public extension EnvironmentValues {
         var networkImageLoader: NetworkImageLoader {
             get { self[NetworkImageLoaderKey.self] }
             set { self[NetworkImageLoaderKey.self] = newValue }
@@ -240,12 +216,12 @@
         }
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private struct NetworkImageLoaderKey: EnvironmentKey {
         static let defaultValue: NetworkImageLoader = .shared
     }
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     private struct NetworkImageSchedulerKey: EnvironmentKey {
         static let defaultValue: AnySchedulerOf<DispatchQueue> = .main.animation(.default)
     }
