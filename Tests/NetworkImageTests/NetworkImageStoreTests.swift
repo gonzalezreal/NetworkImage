@@ -1,113 +1,112 @@
-#if canImport(Combine)
-    import Combine
-    import CombineSchedulers
-    import XCTest
 
-    @testable import NetworkImage
+import Combine
+import CombineSchedulers
+import XCTest
 
-    @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-    final class NetworkImageStoreTests: XCTestCase {
-        private var cancellables = Set<AnyCancellable>()
+@testable import NetworkImage
 
-        override func tearDownWithError() throws {
-            cancellables.removeAll()
-        }
+@available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+final class NetworkImageStoreTests: XCTestCase {
+    private var cancellables = Set<AnyCancellable>()
 
-        func testNilURLReturnsFallback() {
-            // given
-            let store = NetworkImageStore(url: nil)
-
-            var result: [NetworkImageStore.State] = []
-
-            store.$state
-                .sink { result.append($0) }
-                .store(in: &cancellables)
-
-            // when
-            store.send(
-                .onAppear(
-                    environment: .init(
-                        imageLoader: .failing,
-                        mainQueue: .immediate
-                    )
-                )
-            )
-
-            // then
-            XCTAssertEqual([.fallback], result)
-        }
-
-        func testValidURLReturnsImage() {
-            // given
-            let scheduler = DispatchQueue.test
-            let store = NetworkImageStore(url: Fixtures.anyImageURL)
-            var result: [NetworkImageStore.State] = []
-
-            store.$state
-                .sink { result.append($0) }
-                .store(in: &cancellables)
-
-            // when
-            store.send(
-                .onAppear(
-                    environment: .init(
-                        imageLoader: .mock(
-                            url: Fixtures.anyImageURL,
-                            withResponse: Just(Fixtures.anyImage)
-                                .setFailureType(to: Error.self)
-                                .delay(for: .seconds(1), scheduler: scheduler)
-                        ),
-                        mainQueue: scheduler.eraseToAnyScheduler()
-                    )
-                )
-            )
-            scheduler.advance(by: .seconds(1))
-
-            // then
-            XCTAssertEqual(
-                [
-                    .notRequested(Fixtures.anyImageURL),
-                    .placeholder,
-                    .image(Fixtures.anyImage),
-                ],
-                result
-            )
-        }
-
-        func testFailingURLReturnsFallback() {
-            // given
-            let scheduler = DispatchQueue.test
-            let store = NetworkImageStore(url: Fixtures.anyImageURL)
-            var result: [NetworkImageStore.State] = []
-
-            store.$state
-                .sink { result.append($0) }
-                .store(in: &cancellables)
-
-            // when
-            store.send(
-                .onAppear(
-                    environment: .init(
-                        imageLoader: .mock(
-                            url: Fixtures.anyImageURL,
-                            withResponse: Fail(error: Fixtures.anyError as Error)
-                                .delay(for: .seconds(1), scheduler: scheduler)
-                        ),
-                        mainQueue: scheduler.eraseToAnyScheduler()
-                    )
-                )
-            )
-            scheduler.advance(by: .seconds(1))
-
-            // then
-            XCTAssertEqual(
-                [
-                    .notRequested(Fixtures.anyImageURL),
-                    .placeholder,
-                    .fallback,
-                ],
-                result
-            )
-        }
+    override func tearDownWithError() throws {
+        cancellables.removeAll()
     }
-#endif
+
+    func testNilURLReturnsFallback() {
+        // given
+        let store = NetworkImageStore(url: nil)
+
+        var result: [NetworkImageStore.State] = []
+
+        store.$state
+            .sink { result.append($0) }
+            .store(in: &cancellables)
+
+        // when
+        store.send(
+            .onAppear(
+                environment: .init(
+                    imageLoader: .failing,
+                    mainQueue: .immediate
+                )
+            )
+        )
+
+        // then
+        XCTAssertEqual([.fallback], result)
+    }
+
+    func testValidURLReturnsImage() {
+        // given
+        let scheduler = DispatchQueue.test
+        let store = NetworkImageStore(url: Fixtures.anyImageURL)
+        var result: [NetworkImageStore.State] = []
+
+        store.$state
+            .sink { result.append($0) }
+            .store(in: &cancellables)
+
+        // when
+        store.send(
+            .onAppear(
+                environment: .init(
+                    imageLoader: .mock(
+                        url: Fixtures.anyImageURL,
+                        withResponse: Just(Fixtures.anyImage)
+                            .setFailureType(to: Error.self)
+                            .delay(for: .seconds(1), scheduler: scheduler)
+                    ),
+                    mainQueue: scheduler.eraseToAnyScheduler()
+                )
+            )
+        )
+        scheduler.advance(by: .seconds(1))
+
+        // then
+        XCTAssertEqual(
+            [
+                .notRequested(Fixtures.anyImageURL),
+                .placeholder,
+                .image(Fixtures.anyImage),
+            ],
+            result
+        )
+    }
+
+    func testFailingURLReturnsFallback() {
+        // given
+        let scheduler = DispatchQueue.test
+        let store = NetworkImageStore(url: Fixtures.anyImageURL)
+        var result: [NetworkImageStore.State] = []
+
+        store.$state
+            .sink { result.append($0) }
+            .store(in: &cancellables)
+
+        // when
+        store.send(
+            .onAppear(
+                environment: .init(
+                    imageLoader: .mock(
+                        url: Fixtures.anyImageURL,
+                        withResponse: Fail(error: Fixtures.anyError as Error)
+                            .delay(for: .seconds(1), scheduler: scheduler)
+                    ),
+                    mainQueue: scheduler.eraseToAnyScheduler()
+                )
+            )
+        )
+        scheduler.advance(by: .seconds(1))
+
+        // then
+        XCTAssertEqual(
+            [
+                .notRequested(Fixtures.anyImageURL),
+                .placeholder,
+                .fallback,
+            ],
+            result
+        )
+    }
+}
