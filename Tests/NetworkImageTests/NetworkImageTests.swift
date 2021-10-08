@@ -1,4 +1,4 @@
-#if !os(macOS) && !targetEnvironment(macCatalyst)
+#if !os(watchOS) && !os(macOS) && !targetEnvironment(macCatalyst)
     import Combine
     import SnapshotTesting
     import SwiftUI
@@ -6,7 +6,6 @@
 
     import NetworkImage
 
-    @available(iOS 14.0, tvOS 14.0, *)
     final class NetworkImageTests: XCTestCase {
         #if os(iOS)
             private let layout = SwiftUISnapshotLayout.device(config: .iPhone8)
@@ -85,6 +84,7 @@
             assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
         }
 
+        @available(iOS 14.0, tvOS 14.0, *)
         func testCustomPlaceholder() {
             let testScheduler = DispatchQueue.test
             let view = NetworkImage(
@@ -125,6 +125,7 @@
             assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
         }
 
+        @available(iOS 14.0, tvOS 14.0, *)
         func testImagePlaceholder() {
             let testScheduler = DispatchQueue.test
             let view = NetworkImage(
@@ -148,6 +149,7 @@
             assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
         }
 
+        @available(iOS 14.0, tvOS 14.0, *)
         func testImageFallback() {
             let view = NetworkImage(
                 url: Fixtures.anyImageURL,

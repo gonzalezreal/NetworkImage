@@ -8,7 +8,6 @@ extension URLSession {
     }
 
     /// Returns a `URLSession` optimized for image downloading.
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public static var imageLoading: URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.requestCachePolicy = .returnCacheDataElseLoad

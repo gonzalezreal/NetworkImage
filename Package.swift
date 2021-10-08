@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "NetworkImage", targets: ["NetworkImage"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.2"),
+        .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.3"),
         .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.1"),
         .package(
             name: "SnapshotTesting",
@@ -35,7 +35,11 @@ let package = Package(
             name: "NetworkImageTests",
             dependencies: [
                 "NetworkImage",
-                "SnapshotTesting",
+                .product(
+                    name: "SnapshotTesting",
+                    package: "SnapshotTesting",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS])
+                ),
             ],
             exclude: [
                 "__Snapshots__",

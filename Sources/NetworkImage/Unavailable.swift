@@ -17,7 +17,6 @@ public final class ImmediateImageCache: ImageCache {
 }
 
 @available(*, unavailable, renamed: "NetworkImageLoader")
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public final class ImageDownloader {
     public static let shared = ImageDownloader(
         session: .imageLoading,
@@ -31,7 +30,6 @@ public final class ImageDownloader {
     }
 }
 
-@available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
 public extension NetworkImage {
     @available(*, unavailable, renamed: "networkImageScheduler")
     func synchronous() -> NetworkImage {

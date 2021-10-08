@@ -5,7 +5,6 @@ import XCTest
 
 @testable import NetworkImage
 
-@available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
 final class NetworkImageStoreTests: XCTestCase {
     private var cancellables = Set<AnyCancellable>()
 
