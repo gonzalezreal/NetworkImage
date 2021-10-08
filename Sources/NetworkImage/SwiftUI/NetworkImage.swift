@@ -57,7 +57,6 @@ import SwiftUI
 ///         }
 ///     }
 ///
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
     @Environment(\.networkImageStyle) private var imageStyle
     @Environment(\.networkImageLoader) private var imageLoader
@@ -131,7 +130,6 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public extension NetworkImage where Fallback == EmptyView {
     /// Creates a network image without placeholders.
     /// - Parameter url: The URL where the image is located.
@@ -152,7 +150,6 @@ public extension NetworkImage where Fallback == EmptyView {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public extension NetworkImage where Placeholder == EmptyView {
     /// Creates a network image with a fallback view.
     /// - Parameters:
@@ -187,7 +184,6 @@ public extension NetworkImage where Placeholder == EmptyView {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public extension View {
     #if DEBUG
         /// Sets the image loader for network images within this view.
@@ -202,7 +198,6 @@ public extension View {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public extension EnvironmentValues {
     var networkImageLoader: NetworkImageLoader {
         get { self[NetworkImageLoaderKey.self] }
@@ -215,12 +210,10 @@ public extension EnvironmentValues {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 private struct NetworkImageLoaderKey: EnvironmentKey {
     static let defaultValue: NetworkImageLoader = .shared
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 private struct NetworkImageSchedulerKey: EnvironmentKey {
     static let defaultValue: AnySchedulerOf<DispatchQueue> = .main.animation(.default)
 }

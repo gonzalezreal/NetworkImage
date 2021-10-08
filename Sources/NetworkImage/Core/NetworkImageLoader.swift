@@ -3,7 +3,6 @@ import Foundation
 import XCTestDynamicOverlay
 
 /// Loads and caches images.
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public struct NetworkImageLoader {
     private let _image: (URL) -> AnyPublisher<OSImage, Error>
     private let _cachedImage: (URL) -> OSImage?
@@ -65,7 +64,6 @@ public struct NetworkImageLoader {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public extension NetworkImageLoader {
     /// The shared singleton image loader.
     ///
@@ -75,7 +73,6 @@ public extension NetworkImageLoader {
 }
 
 #if DEBUG
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public extension NetworkImageLoader {
         static func mock<P>(
             url matchingURL: URL,
