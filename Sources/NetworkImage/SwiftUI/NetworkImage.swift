@@ -8,29 +8,41 @@ import SwiftUI
 ///
 /// You create a network image, in its simplest form, by providing the image URL.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+/// ```swift
+/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+/// ```
 ///
 /// You can also provide the name of a placeholder image that the view will display while the image is loading or, as
 /// a fallback, if an error occurs or the URL is `nil`.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"),
-///                  placeholderSystemImage: "photo.fill")
+/// ```swift
+/// NetworkImage(
+///   url: URL(string: "https://picsum.photos/id/237/300/200"),
+///   placeholderSystemImage: "photo.fill"
+/// )
+/// ```
 ///
 /// If you want, you can only provide a fallback image. A network image view only displays this image if an error occurs
 /// or when the URL is `nil`.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"),
-///                  fallbackSystemImage: "photo.fill")
+/// ```swift
+/// NetworkImage(
+///   url: URL(string: "https://picsum.photos/id/237/300/200"),
+///   fallbackSystemImage: "photo.fill"
+/// )
+/// ```
 ///
 /// It is also possible to create network images using views to compose the network image's placeholders
 /// programmatically.
 ///
-///     NetworkImage(url: movie.posterURL) {
-///         ProgressView()
-///     } fallback: {
-///         Text(movie.title)
-///             .padding()
-///     }
+/// ```swift
+/// NetworkImage(url: movie.posterURL) {
+///   ProgressView()
+/// } fallback: {
+///   Text(movie.title)
+///     .padding()
+/// }
+/// ```
 ///
 /// ### Styling Network Images
 ///
@@ -39,24 +51,24 @@ import SwiftUI
 /// the `networkImageStyle(_:)` modifier. In the following example, a custom style adds a grayscale
 /// effect to all the network image views within the enclosing `VStack`:
 ///
-///     struct ContentView: View {
-///         var body: some View {
-///             VStack {
-///                 NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
-///                 NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
-///             }
-///             .networkImageStyle(GrayscaleNetworkImageStyle())
-///         }
+/// ```swift
+/// struct ContentView: View {
+///   var body: some View {
+///     VStack {
+///       NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
+///       NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
 ///     }
-///
-///     struct GrayscaleNetworkImageStyle: NetworkImageStyle {
-///         func makeBody(configuration: Configuration) -> some View {
-///             configuration.image
-///                 .resizable()
-///                 .grayscale(0.99)
-///         }
-///     }
-///
+///     .networkImageStyle(GrayscaleNetworkImageStyle())
+///   }
+/// }
+/// struct GrayscaleNetworkImageStyle: NetworkImageStyle {
+///   func makeBody(configuration: Configuration) -> some View {
+///     configuration.image
+///       .resizable()
+///       .grayscale(0.99)
+///   }
+/// }
+/// ```
 public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
   @Environment(\.networkImageStyle) private var imageStyle
   @Environment(\.networkImageLoader) private var imageLoader
