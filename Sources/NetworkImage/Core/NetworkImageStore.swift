@@ -4,7 +4,7 @@ import Foundation
 
 internal struct NetworkImageEnvironment {
   var imageLoader: NetworkImageLoader
-  var mainQueue: AnySchedulerOf<DispatchQueue>
+  var uiScheduler: AnySchedulerOf<UIScheduler>
 }
 
 internal final class NetworkImageStore: ObservableObject {
@@ -45,7 +45,7 @@ internal final class NetworkImageStore: ObservableObject {
         environment.imageLoader.image(for: url)
           .map { .didLoadImage($0) }
           .replaceError(with: .didFail)
-          .receive(on: environment.mainQueue)
+          .receive(on: environment.uiScheduler)
           .sink { [weak self] action in
             self?.send(action)
           }

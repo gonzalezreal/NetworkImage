@@ -145,8 +145,8 @@ final class MyTests: XCTestCase {
             .networkImageLoader(
                 .mock(response: Fail(error: URLError(.badServerResponse) as Error))
             )
-            // Schedule state changes immediately
-            .networkImageScheduler(.immediate)
+            // Disable animations
+            .networkImageScheduler(UIScheduler.shared)
         
         assertSnapshot(matching: view, as: .image(layout: .device(config: .iPhoneSe)))
     }
@@ -163,12 +163,12 @@ struct ContentView: View {
             NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
             NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
         }
-        .networkImageScheduler(.main.animation(.easeIn(duration: 0.25)))
+        .networkImageScheduler(UIScheduler.shared.animation(.easeIn(duration: 0.25)))
     }
 }
 ```
 
-If you want to disable animations in NetworkImage, simply pass `.main` to the `.networkImageScheduler` view modifier.
+If you want to disable animations in NetworkImage, simply pass `UIScheduler.shared` to the `.networkImageScheduler` view modifier.
 
 ```swift
 struct ContentView: View {
@@ -177,12 +177,10 @@ struct ContentView: View {
             NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
             NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
         }
-        .networkImageScheduler(.main)
+        .networkImageScheduler(UIScheduler.shared)
     }
 }
-```
-
-Make sure that you always use the `main` scheduler for network image state changes in your production code. 
+``` 
 
 ## Installation
 You can add NetworkImage to an Xcode project by adding it as a package dependency.

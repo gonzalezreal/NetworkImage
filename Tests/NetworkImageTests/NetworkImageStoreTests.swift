@@ -26,7 +26,7 @@ final class NetworkImageStoreTests: XCTestCase {
       .onAppear(
         environment: .init(
           imageLoader: .failing,
-          mainQueue: .immediate
+          uiScheduler: UIScheduler.shared.eraseToAnyScheduler()
         )
       )
     )
@@ -55,7 +55,7 @@ final class NetworkImageStoreTests: XCTestCase {
               .setFailureType(to: Error.self)
               .delay(for: .seconds(1), scheduler: scheduler)
           ),
-          mainQueue: scheduler.eraseToAnyScheduler()
+          uiScheduler: UIScheduler.shared.eraseToAnyScheduler()
         )
       )
     )
@@ -91,7 +91,7 @@ final class NetworkImageStoreTests: XCTestCase {
             withResponse: Fail(error: Fixtures.anyError as Error)
               .delay(for: .seconds(1), scheduler: scheduler)
           ),
-          mainQueue: scheduler.eraseToAnyScheduler()
+          uiScheduler: UIScheduler.shared.eraseToAnyScheduler()
         )
       )
     )
