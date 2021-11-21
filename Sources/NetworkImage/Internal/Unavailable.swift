@@ -1,6 +1,8 @@
 import Combine
 import Foundation
 
+// NB: Unavailable in 3.0.0
+
 @available(*, unavailable, renamed: "NetworkImageCache")
 public protocol ImageCache: AnyObject {
   func image(for url: URL) -> OSImage?

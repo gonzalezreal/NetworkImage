@@ -1,22 +1,10 @@
 #if os(iOS) || os(tvOS) || os(watchOS)
   import UIKit
 
-  #if os(watchOS)
-    import WatchKit
-  #endif
-
   public typealias OSImage = UIImage
 
-  private func screenScale() -> CGFloat {
-    #if os(watchOS)
-      return WKInterfaceDevice.current().screenScale
-    #else
-      return UIScreen.main.scale
-    #endif
-  }
-
-  internal func decodeImage(from data: Data) throws -> UIImage {
-    guard let image = UIImage(data: data, scale: screenScale()) else {
+  internal func decodeImage(from data: Data, scale: CGFloat) throws -> UIImage {
+    guard let image = UIImage(data: data, scale: scale) else {
       throw NetworkImageError.invalidData(data)
     }
 
@@ -31,7 +19,7 @@
 
   public typealias OSImage = NSImage
 
-  internal func decodeImage(from data: Data) throws -> NSImage {
+  internal func decodeImage(from data: Data, scale _: CGFloat) throws -> NSImage {
     guard let bitmapImageRep = NSBitmapImageRep(data: data) else {
       throw NetworkImageError.invalidData(data)
     }

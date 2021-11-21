@@ -34,7 +34,7 @@ final class NetworkImageLoaderTests: XCTestCase {
 
     // when
     var result: OSImage?
-    imageLoader.image(for: Fixtures.anyImageURL)
+    imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .assertNoFailure()
       .sink(receiveValue: {
         result = $0
@@ -43,19 +43,20 @@ final class NetworkImageLoaderTests: XCTestCase {
 
     // then
     let unwrappedResult = try XCTUnwrap(result)
-    XCTAssertTrue(unwrappedResult.isEqual(imageCache.image(for: Fixtures.anyImageURL)))
-    XCTAssertTrue(unwrappedResult.isEqual(imageLoader.cachedImage(for: Fixtures.anyImageURL)))
+    XCTAssertTrue(unwrappedResult.isEqual(imageCache.image(for: Fixtures.anyImageURL, scale: 1)))
+    XCTAssertTrue(
+      unwrappedResult.isEqual(imageLoader.cachedImage(for: Fixtures.anyImageURL, scale: 1)))
   }
 
   func testImageReturnsCachedImageIfAvailable() throws {
     // given
     let imageCache = NetworkImageCache()
     let imageLoader = NetworkImageLoader(urlLoader: .failing, imageCache: imageCache)
-    imageCache.setImage(Fixtures.anyImage, for: Fixtures.anyImageURL)
+    imageCache.setImage(Fixtures.anyImage, for: Fixtures.anyImageURL, scale: 1)
 
     // when
     var result: OSImage?
-    imageLoader.image(for: Fixtures.anyImageURL)
+    imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .assertNoFailure()
       .sink(receiveValue: {
         result = $0
@@ -90,7 +91,7 @@ final class NetworkImageLoaderTests: XCTestCase {
 
     // when
     var result: Error?
-    imageLoader.image(for: Fixtures.anyImageURL)
+    imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .sink(
         receiveCompletion: { completion in
           if case let .failure(error) = completion {
@@ -129,7 +130,7 @@ final class NetworkImageLoaderTests: XCTestCase {
 
     // when
     var result: Error?
-    imageLoader.image(for: Fixtures.anyImageURL)
+    imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .sink(
         receiveCompletion: { completion in
           if case let .failure(error) = completion {
