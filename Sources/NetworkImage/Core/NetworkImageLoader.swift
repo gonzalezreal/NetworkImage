@@ -1,11 +1,11 @@
 import Combine
+import CoreGraphics
 import Foundation
-import XCTestDynamicOverlay
 
 /// Loads and caches images.
 public struct NetworkImageLoader {
-  private let _image: (URL) -> AnyPublisher<OSImage, Error>
-  private let _cachedImage: (URL) -> OSImage?
+  private let _image: (URL, CGFloat) -> AnyPublisher<OSImage, Error>
+  private let _cachedImage: (URL, CGFloat) -> OSImage?
 
   /// Creates an image loader.
   /// - Parameters:
@@ -17,8 +17,8 @@ public struct NetworkImageLoader {
 
   init(urlLoader: URLLoader, imageCache: NetworkImageCache) {
     self.init(
-      image: { url in
-        if let image = imageCache.image(for: url) {
+      image: { url, scale in
+        if let image = imageCache.image(for: url, scale: scale) {
           return Just(image)
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
@@ -31,36 +31,36 @@ public struct NetworkImageLoader {
                 }
               }
 
-              return try decodeImage(from: data)
+              return try decodeImage(from: data, scale: scale)
             }
             .handleEvents(receiveOutput: { image in
-              imageCache.setImage(image, for: url)
+              imageCache.setImage(image, for: url, scale: scale)
             })
             .eraseToAnyPublisher()
         }
       },
-      cachedImage: { url in
-        imageCache.image(for: url)
+      cachedImage: { url, scale in
+        imageCache.image(for: url, scale: scale)
       }
     )
   }
 
   init(
-    image: @escaping (URL) -> AnyPublisher<OSImage, Error>,
-    cachedImage: @escaping (URL) -> OSImage?
+    image: @escaping (URL, CGFloat) -> AnyPublisher<OSImage, Error>,
+    cachedImage: @escaping (URL, CGFloat) -> OSImage?
   ) {
     _image = image
     _cachedImage = cachedImage
   }
 
   /// Returns a publisher that loads an image for a given URL.
-  public func image(for url: URL) -> AnyPublisher<OSImage, Error> {
-    _image(url)
+  public func image(for url: URL, scale: CGFloat = 1) -> AnyPublisher<OSImage, Error> {
+    _image(url, scale)
   }
 
   /// Returns the cached image for a given URL if there is any.
-  public func cachedImage(for url: URL) -> OSImage? {
-    _cachedImage(url)
+  public func cachedImage(for url: URL, scale: CGFloat = 1) -> OSImage? {
+    _cachedImage(url, scale)
   }
 }
 
@@ -73,18 +73,21 @@ extension NetworkImageLoader {
 }
 
 #if DEBUG
+  import XCTestDynamicOverlay
+
   extension NetworkImageLoader {
     public static func mock<P>(
       url matchingURL: URL,
+      scale matchingScale: CGFloat = 1,
       withResponse response: P
     ) -> Self where P: Publisher, P.Output == OSImage, P.Failure == Error {
-      Self { url in
-        if url != matchingURL {
-          XCTFail("\(Self.self).image recevied an unexpected URL: \(url)")
+      Self { url, scale in
+        if url != matchingURL, scale != matchingScale {
+          XCTFail("\(Self.self).image received an unexpected URL: \(url) or scale: \(scale)")
         }
 
         return response.eraseToAnyPublisher()
-      } cachedImage: { _ in
+      } cachedImage: { _, _ in
         nil
       }
     }
@@ -92,20 +95,20 @@ extension NetworkImageLoader {
     public static func mock<P>(
       response: P
     ) -> Self where P: Publisher, P.Output == OSImage, P.Failure == Error {
-      Self { _ in
+      Self { _, _ in
         response.eraseToAnyPublisher()
-      } cachedImage: { _ in
+      } cachedImage: { _, _ in
         nil
       }
     }
 
     public static var failing: Self {
-      Self { _ in
+      Self { _, _ in
         XCTFail("\(Self.self).image is unimplemented")
         return Just(OSImage())
           .setFailureType(to: Error.self)
           .eraseToAnyPublisher()
-      } cachedImage: { _ in
+      } cachedImage: { _, _ in
         nil
       }
     }

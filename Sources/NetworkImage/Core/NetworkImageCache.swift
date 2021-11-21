@@ -1,41 +1,66 @@
+import CoreGraphics
 import Foundation
 
 /// Temporarily store images, keyed by their URL.
 public struct NetworkImageCache {
-  private let _image: (URL) -> OSImage?
-  private let _setImage: (OSImage, URL) -> Void
+  private let _image: (URL, CGFloat) -> OSImage?
+  private let _setImage: (OSImage, URL, CGFloat) -> Void
 
-  public init(nsCache: NSCache<NSURL, OSImage> = NSCache()) {
+  public init() {
+    class Key: NSObject {
+      let url: URL
+      let scale: CGFloat
+
+      init(_ url: URL, _ scale: CGFloat) {
+        self.url = url
+        self.scale = scale
+      }
+
+      override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? Key else { return false }
+        return url == other.url && scale == other.scale
+      }
+
+      override var hash: Int {
+        return url.hashValue ^ scale.hashValue
+      }
+    }
+
+    let nsCache = NSCache<Key, OSImage>()
+
     self.init(
-      image: { url in
-        nsCache.object(forKey: url as NSURL)
+      image: { url, scale in
+        nsCache.object(forKey: Key(url, scale))
       },
-      setImage: { image, url in
-        nsCache.setObject(image, forKey: url as NSURL)
+      setImage: { image, url, scale in
+        nsCache.setObject(image, forKey: Key(url, scale))
       }
     )
   }
 
-  init(image: @escaping (URL) -> OSImage?, setImage: @escaping (OSImage, URL) -> Void) {
+  init(
+    image: @escaping (URL, CGFloat) -> OSImage?,
+    setImage: @escaping (OSImage, URL, CGFloat) -> Void
+  ) {
     _image = image
     _setImage = setImage
   }
 
   /// Returns the image associated with a given URL.
-  public func image(for url: URL) -> OSImage? {
-    _image(url)
+  public func image(for url: URL, scale: CGFloat = 1) -> OSImage? {
+    _image(url, scale)
   }
 
   /// Stores the image in the cache, associated with the specified URL.
-  public func setImage(_ image: OSImage, for url: URL) {
-    _setImage(image, url)
+  public func setImage(_ image: OSImage, for url: URL, scale: CGFloat = 1) {
+    _setImage(image, url, scale)
   }
 }
 
 #if DEBUG
   extension NetworkImageCache {
     public static var noop: Self {
-      Self(image: { _ in nil }, setImage: { _, _ in })
+      Self(image: { _, _ in nil }, setImage: { _, _, _ in })
     }
   }
 #endif
