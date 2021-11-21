@@ -1,4 +1,4 @@
-import CombineSchedulers
+@_exported import CombineSchedulers
 import SwiftUI
 
 /// A view that displays an image located at a given URL.
@@ -126,7 +126,7 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
             .onAppear(
               environment: .init(
                 imageLoader: imageLoader,
-                mainQueue: imageScheduler
+                uiScheduler: imageScheduler
               )
             )
           )
@@ -207,10 +207,14 @@ extension View {
   #endif
 
   /// Sets the scheduler for network images within this view.
-  public func networkImageScheduler(_ networkImageScheduler: AnySchedulerOf<DispatchQueue>)
-    -> some View
-  {
+  public func networkImageScheduler(
+    _ networkImageScheduler: AnySchedulerOf<UIScheduler>
+  ) -> some View {
     environment(\.networkImageScheduler, networkImageScheduler)
+  }
+
+  public func networkImageScheduler(_ networkImageScheduler: UIScheduler) -> some View {
+    environment(\.networkImageScheduler, networkImageScheduler.eraseToAnyScheduler())
   }
 }
 
@@ -220,7 +224,7 @@ extension EnvironmentValues {
     set { self[NetworkImageLoaderKey.self] = newValue }
   }
 
-  public var networkImageScheduler: AnySchedulerOf<DispatchQueue> {
+  public var networkImageScheduler: AnySchedulerOf<UIScheduler> {
     get { self[NetworkImageSchedulerKey.self] }
     set { self[NetworkImageSchedulerKey.self] = newValue }
   }
@@ -231,5 +235,5 @@ private struct NetworkImageLoaderKey: EnvironmentKey {
 }
 
 private struct NetworkImageSchedulerKey: EnvironmentKey {
-  static let defaultValue: AnySchedulerOf<DispatchQueue> = .main.animation(.default)
+  static let defaultValue: AnySchedulerOf<UIScheduler> = UIScheduler.shared.animation(.default)
 }
