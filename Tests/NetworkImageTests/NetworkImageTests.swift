@@ -84,7 +84,6 @@
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }
 
-    @available(iOS 14.0, tvOS 14.0, *)
     func testCustomPlaceholder() {
       let testScheduler = DispatchQueue.test
       let view = NetworkImage(
@@ -125,7 +124,6 @@
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }
 
-    @available(iOS 14.0, tvOS 14.0, *)
     func testImagePlaceholder() {
       let testScheduler = DispatchQueue.test
       let view = NetworkImage(
@@ -149,7 +147,6 @@
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }
 
-    @available(iOS 14.0, tvOS 14.0, *)
     func testImageFallback() {
       let view = NetworkImage(
         url: Fixtures.anyImageURL,

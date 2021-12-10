@@ -108,7 +108,6 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   /// - Parameters:
   ///   - url: The URL where the image is located.
   ///   - placeholderSystemImage: The name of the system image that will be used as a placeholder.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(url: URL?, placeholderSystemImage name: String)
   where Placeholder == Image, Fallback == Image {
     store = NetworkImageStore(url: url)
@@ -190,7 +189,6 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - fallbackSystemImage: The name of the system image to display when the URL is `nil`
   ///     or an error has occurred.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
     store = NetworkImageStore(url: url)
     placeholder = EmptyView()

@@ -12,10 +12,10 @@ You can explore all the capabilities of this package in the [companion demo proj
 
 You can use `NetworkImage` in the following platforms:
 
-* macOS 10.15+
-* iOS 13.0+
-* tvOS 13.0+
-* watchOS 6.0+
+* macOS 11.0+
+* iOS 14.0+
+* tvOS 14.0+
+* watchOS 7.0+
 
 ## Usage
 A network image downloads and displays an image from a given URL; the download is asynchronous, and the result is cached both in disk and memory.
