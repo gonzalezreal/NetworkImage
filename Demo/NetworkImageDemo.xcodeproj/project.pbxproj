@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7363B4662763D31B00787D89 /* RandomImageExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7363B4652763D31B00787D89 /* RandomImageExampleView.swift */; };
+		7363B4672763D31B00787D89 /* RandomImageExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7363B4652763D31B00787D89 /* RandomImageExampleView.swift */; };
 		736FE2D1271166DF0096FFD5 /* NetworkImage in Frameworks */ = {isa = PBXBuildFile; productRef = 736FE2D0271166DF0096FFD5 /* NetworkImage */; };
 		736FE2D3271166E60096FFD5 /* NetworkImage in Frameworks */ = {isa = PBXBuildFile; productRef = 736FE2D2271166E60096FFD5 /* NetworkImage */; };
 		823B4EB625B08999003ACBD5 /* ImageListExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 823B4EB525B08999003ACBD5 /* ImageListExampleView.swift */; };
@@ -27,6 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7363B4652763D31B00787D89 /* RandomImageExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RandomImageExampleView.swift; sourceTree = "<group>"; };
 		736FE2CF271166B70096FFD5 /* NetworkImage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = NetworkImage; path = ..; sourceTree = "<group>"; };
 		823B4EB525B08999003ACBD5 /* ImageListExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageListExampleView.swift; sourceTree = "<group>"; };
 		82BCD90725AE1B2D00FC3072 /* ExampleList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleList.swift; sourceTree = "<group>"; };
@@ -84,6 +87,7 @@
 				82BCD91925AE2FD500FC3072 /* PlaceholderExampleView.swift */,
 				82F4ACDD25AE0E2600D19C29 /* StyleExampleView.swift */,
 				823B4EB525B08999003ACBD5 /* ImageListExampleView.swift */,
+				7363B4652763D31B00787D89 /* RandomImageExampleView.swift */,
 				82F4ACB225AE0C3100D19C29 /* Assets.xcassets */,
 			);
 			path = Shared;
@@ -228,6 +232,7 @@
 			files = (
 				82BCD90825AE1B2D00FC3072 /* ExampleList.swift in Sources */,
 				82BCD92125AEC74900FC3072 /* ImageLoaderExampleView.swift in Sources */,
+				7363B4662763D31B00787D89 /* RandomImageExampleView.swift in Sources */,
 				82F4ACC325AE0C3200D19C29 /* NetworkImageDemoApp.swift in Sources */,
 				82F4ACDE25AE0E2600D19C29 /* StyleExampleView.swift in Sources */,
 				82BCD91A25AE2FD500FC3072 /* PlaceholderExampleView.swift in Sources */,
@@ -243,6 +248,7 @@
 				82BCD90925AE1B2D00FC3072 /* ExampleList.swift in Sources */,
 				82F4ACC425AE0C3200D19C29 /* NetworkImageDemoApp.swift in Sources */,
 				82F4ACDF25AE0E2600D19C29 /* StyleExampleView.swift in Sources */,
+				7363B4672763D31B00787D89 /* RandomImageExampleView.swift in Sources */,
 				823B4EB725B08999003ACBD5 /* ImageListExampleView.swift in Sources */,
 				82BCD91B25AE2FD500FC3072 /* PlaceholderExampleView.swift in Sources */,
 				82BCD91425AE21D400FC3072 /* SimpleExampleView.swift in Sources */,

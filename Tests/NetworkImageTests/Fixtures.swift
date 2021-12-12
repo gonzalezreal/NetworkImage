@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 @testable import NetworkImage
 
@@ -13,6 +13,12 @@ enum Fixtures {
 
   static let anyImage = try! decodeImage(from: anyImageResponse, scale: 1)
   static let anyError = NetworkImageError.badStatus(500)
+
+  #if os(iOS) || os(tvOS) || os(watchOS)
+    static let anyImageView = Image(uiImage: anyImage)
+  #elseif os(macOS)
+    static let anyImageView = Image(nsImage: anyImage)
+  #endif
 }
 
 private func fixtureURL(_ fileName: String, file: StaticString = #file) -> URL {

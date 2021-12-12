@@ -6,6 +6,7 @@ struct ExampleList: View {
       NavigationLink("Displaying Network Images", destination: SimpleExampleView())
       NavigationLink("Styling Network Images", destination: StyleExampleView())
       NavigationLink("Placeholders and fallbacks", destination: PlaceholderExampleView())
+      NavigationLink("Random Image", destination: RandomImageExampleView())
       NavigationLink("Image List", destination: ImageListExampleView())
 
       #if os(iOS)

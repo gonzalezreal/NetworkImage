@@ -74,9 +74,18 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   @Environment(\.networkImageLoader) private var imageLoader
   @Environment(\.networkImageScheduler) private var imageScheduler
 
-  @ObservedObject private var store: NetworkImageStore
+  @StateObject private var viewModel = NetworkImageViewModel()
+
+  private let url: URL?
   private let placeholder: Placeholder
   private let fallback: Fallback
+
+  private var environment: NetworkImageViewModel.Environment {
+    .init(
+      imageLoader: imageLoader,
+      uiScheduler: imageScheduler
+    )
+  }
 
   /// Creates a network image with custom placeholders.
   /// - Parameters:
@@ -88,7 +97,7 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
     @ViewBuilder placeholder: () -> Placeholder,
     @ViewBuilder fallback: () -> Fallback
   ) {
-    store = NetworkImageStore(url: url)
+    self.url = url
     self.placeholder = placeholder()
     self.fallback = fallback()
   }
@@ -99,7 +108,7 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   ///   - placeholderImage: The name of the placeholder image resource.
   public init(url: URL?, placeholderImage name: String)
   where Placeholder == Image, Fallback == Image {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = Image(name)
     fallback = Image(name)
   }
@@ -110,35 +119,31 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   ///   - placeholderSystemImage: The name of the system image that will be used as a placeholder.
   public init(url: URL?, placeholderSystemImage name: String)
   where Placeholder == Image, Fallback == Image {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = Image(systemName: name)
     fallback = Image(systemName: name)
   }
 
   public var body: some View {
-    switch store.state {
-    case .notRequested, .placeholder:
-      Color.clear
-        .overlay(placeholder)
-        .onAppear {
-          store.send(
-            .onAppear(
-              environment: .init(
-                imageLoader: imageLoader,
-                uiScheduler: imageScheduler
-              )
-            )
-          )
+    Group {
+      if let state = self.viewModel.state {
+        switch state {
+        case .empty:
+          Color.clear.overlay(placeholder)
+        case .success(let image):
+          imageStyle.makeBody(configuration: .init(image: image, size: .zero))
+        case .failure:
+          fallback
         }
-    case let .image(osImage):
-      imageStyle.makeBody(
-        configuration: NetworkImageStyleConfiguration(
-          image: Image(osImage: osImage),
-          size: osImage.size
-        )
-      )
-    case .fallback:
-      fallback
+      } else {
+        Color.clear.overlay(placeholder)
+      }
+    }
+    .onAppear {
+      self.viewModel.onAppear(url: self.url, environment: self.environment)
+    }
+    .onChange(of: self.url) { newValue in
+      self.viewModel.onURLChange(url: newValue, environment: self.environment)
     }
   }
 }
@@ -147,7 +152,7 @@ extension NetworkImage where Fallback == EmptyView {
   /// Creates a network image without placeholders.
   /// - Parameter url: The URL where the image is located.
   public init(url: URL?) where Placeholder == EmptyView {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = EmptyView()
     fallback = EmptyView()
   }
@@ -157,7 +162,7 @@ extension NetworkImage where Fallback == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - placeholder: A view builder that creates the view to display while the image is loading.
   public init(url: URL?, @ViewBuilder placeholder: () -> Placeholder) {
-    store = NetworkImageStore(url: url)
+    self.url = url
     self.placeholder = placeholder()
     fallback = EmptyView()
   }
@@ -169,7 +174,7 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
   public init(url: URL?, @ViewBuilder fallback: () -> Fallback) {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = EmptyView()
     self.fallback = fallback()
   }
@@ -179,7 +184,7 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - fallbackImage: The name of the image resource to display when the URL is `nil` or an error has occurred.
   public init(url: URL?, fallbackImage name: String) where Fallback == Image {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = EmptyView()
     fallback = Image(name)
   }
@@ -190,7 +195,7 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - fallbackSystemImage: The name of the system image to display when the URL is `nil`
   ///     or an error has occurred.
   public init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
-    store = NetworkImageStore(url: url)
+    self.url = url
     placeholder = EmptyView()
     fallback = Image(systemName: name)
   }
