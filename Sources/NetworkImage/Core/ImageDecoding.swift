@@ -1,9 +1,9 @@
 #if os(iOS) || os(tvOS) || os(watchOS)
   import UIKit
 
-  public typealias OSImage = UIImage
+  public typealias PlatformImage = UIImage
 
-  internal func decodeImage(from data: Data, scale: CGFloat) throws -> UIImage {
+  func decodeImage(from data: Data, scale: CGFloat) throws -> UIImage {
     guard let image = UIImage(data: data, scale: scale) else {
       throw NetworkImageError.invalidData(data)
     }
@@ -17,9 +17,9 @@
 #elseif os(macOS)
   import Cocoa
 
-  public typealias OSImage = NSImage
+  public typealias PlatformImage = NSImage
 
-  internal func decodeImage(from data: Data, scale _: CGFloat) throws -> NSImage {
+  func decodeImage(from data: Data, scale _: CGFloat) throws -> NSImage {
     guard let bitmapImageRep = NSBitmapImageRep(data: data) else {
       throw NetworkImageError.invalidData(data)
     }

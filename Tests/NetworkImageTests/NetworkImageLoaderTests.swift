@@ -14,9 +14,9 @@ final class NetworkImageLoaderTests: XCTestCase {
     // given
     let imageCache = NetworkImageCache()
     let imageLoader = NetworkImageLoader(
-      urlLoader: .mock(
-        url: Fixtures.anyImageURL,
-        withResponse: Just(
+      data: { url in
+        XCTAssertEqual(url, Fixtures.anyImageURL)
+        return Just(
           (
             data: Fixtures.anyImageResponse,
             response: HTTPURLResponse(
@@ -28,12 +28,13 @@ final class NetworkImageLoaderTests: XCTestCase {
           )
         )
         .setFailureType(to: URLError.self)
-      ),
+        .eraseToAnyPublisher()
+      },
       imageCache: imageCache
     )
 
     // when
-    var result: OSImage?
+    var result: PlatformImage?
     imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .assertNoFailure()
       .sink(receiveValue: {
@@ -51,11 +52,17 @@ final class NetworkImageLoaderTests: XCTestCase {
   func testImageReturnsCachedImageIfAvailable() throws {
     // given
     let imageCache = NetworkImageCache()
-    let imageLoader = NetworkImageLoader(urlLoader: .failing, imageCache: imageCache)
+    let imageLoader = NetworkImageLoader(
+      data: { _ in
+        XCTFail()
+        return Empty().eraseToAnyPublisher()
+      },
+      imageCache: imageCache
+    )
     imageCache.setImage(Fixtures.anyImage, for: Fixtures.anyImageURL, scale: 1)
 
     // when
-    var result: OSImage?
+    var result: PlatformImage?
     imageLoader.image(for: Fixtures.anyImageURL, scale: 1)
       .assertNoFailure()
       .sink(receiveValue: {
@@ -71,9 +78,9 @@ final class NetworkImageLoaderTests: XCTestCase {
   func testImageFailsWithBadStatusError() throws {
     // given
     let imageLoader = NetworkImageLoader(
-      urlLoader: .mock(
-        url: Fixtures.anyImageURL,
-        withResponse: Just(
+      data: { url in
+        XCTAssertEqual(url, Fixtures.anyImageURL)
+        return Just(
           (
             data: .init(),
             response: HTTPURLResponse(
@@ -85,7 +92,8 @@ final class NetworkImageLoaderTests: XCTestCase {
           )
         )
         .setFailureType(to: URLError.self)
-      ),
+        .eraseToAnyPublisher()
+      },
       imageCache: .noop
     )
 
@@ -110,9 +118,9 @@ final class NetworkImageLoaderTests: XCTestCase {
   func testImageFailsWithInvalidDataError() throws {
     // given
     let imageLoader = NetworkImageLoader(
-      urlLoader: .mock(
-        url: Fixtures.anyImageURL,
-        withResponse: Just(
+      data: { url in
+        XCTAssertEqual(url, Fixtures.anyImageURL)
+        return Just(
           (
             data: Fixtures.anyResponse,
             response: HTTPURLResponse(
@@ -124,7 +132,8 @@ final class NetworkImageLoaderTests: XCTestCase {
           )
         )
         .setFailureType(to: URLError.self)
-      ),
+        .eraseToAnyPublisher()
+      },
       imageCache: .noop
     )
 

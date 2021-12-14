@@ -23,7 +23,6 @@
             withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
           )
         )
-        .networkImageScheduler(.shared)
         .scaledToFill()
         .frame(width: 300, height: 300)
         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -40,7 +39,6 @@
               withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
             )
           )
-          .networkImageScheduler(.shared)
           .scaledToFill()
           .frame(width: 300, height: 300)
           .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -60,7 +58,6 @@
               .delay(for: .seconds(1), scheduler: testScheduler)
           )
         )
-        .networkImageScheduler(.shared)
         .frame(width: 300, height: 300)
         .background(Color.yellow)
 
@@ -77,7 +74,6 @@
             withResponse: Fail(error: Fixtures.anyError as Error)
           )
         )
-        .networkImageScheduler(.shared)
         .frame(width: 300, height: 300)
         .background(Color.yellow)
 
@@ -98,7 +94,6 @@
             .delay(for: .seconds(1), scheduler: testScheduler)
         )
       )
-      .networkImageScheduler(.shared)
       .frame(width: 300, height: 300)
       .background(Color.yellow)
 
@@ -118,7 +113,6 @@
           withResponse: Fail(error: Fixtures.anyError as Error)
         )
       )
-      .networkImageScheduler(.shared)
       .frame(width: 300, height: 300)
       .background(Color.yellow)
 
@@ -139,7 +133,6 @@
             .delay(for: .seconds(1), scheduler: testScheduler)
         )
       )
-      .networkImageScheduler(.shared)
       .frame(width: 300, height: 300)
       .foregroundColor(Color.primary.opacity(0.5))
       .background(Color.yellow)
@@ -161,7 +154,6 @@
           withResponse: Fail(error: Fixtures.anyError as Error)
         )
       )
-      .networkImageScheduler(.shared)
       .frame(width: 300, height: 300)
       .foregroundColor(Color.primary.opacity(0.5))
       .background(Color.yellow)

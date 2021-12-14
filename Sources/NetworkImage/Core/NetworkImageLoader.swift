@@ -4,18 +4,26 @@ import Foundation
 
 /// Loads and caches images.
 public struct NetworkImageLoader {
-  private let _image: (URL, CGFloat) -> AnyPublisher<OSImage, Error>
-  private let _cachedImage: (URL, CGFloat) -> OSImage?
+  private let _image: (URL, CGFloat) -> AnyPublisher<PlatformImage, Error>
+  private let _cachedImage: (URL, CGFloat) -> PlatformImage?
 
   /// Creates an image loader.
   /// - Parameters:
   ///   - urlSession: The `URLSession` that will load the images.
   ///   - imageCache: An immediate cache to store the images in memory.
   public init(urlSession: URLSession, imageCache: NetworkImageCache) {
-    self.init(urlLoader: URLLoader(urlSession: urlSession), imageCache: imageCache)
+    self.init(
+      data: { url in
+        urlSession.dataTaskPublisher(for: url).eraseToAnyPublisher()
+      },
+      imageCache: imageCache
+    )
   }
 
-  init(urlLoader: URLLoader, imageCache: NetworkImageCache) {
+  init(
+    data: @escaping (URL) -> AnyPublisher<(data: Data, response: URLResponse), URLError>,
+    imageCache: NetworkImageCache
+  ) {
     self.init(
       image: { url, scale in
         if let image = imageCache.image(for: url, scale: scale) {
@@ -23,7 +31,7 @@ public struct NetworkImageLoader {
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
         } else {
-          return urlLoader.dataTaskPublisher(for: url)
+          return data(url)
             .tryMap { data, response in
               if let httpResponse = response as? HTTPURLResponse {
                 guard 200..<300 ~= httpResponse.statusCode else {
@@ -46,20 +54,20 @@ public struct NetworkImageLoader {
   }
 
   init(
-    image: @escaping (URL, CGFloat) -> AnyPublisher<OSImage, Error>,
-    cachedImage: @escaping (URL, CGFloat) -> OSImage?
+    image: @escaping (URL, CGFloat) -> AnyPublisher<PlatformImage, Error>,
+    cachedImage: @escaping (URL, CGFloat) -> PlatformImage?
   ) {
     _image = image
     _cachedImage = cachedImage
   }
 
   /// Returns a publisher that loads an image for a given URL.
-  public func image(for url: URL, scale: CGFloat = 1) -> AnyPublisher<OSImage, Error> {
+  public func image(for url: URL, scale: CGFloat = 1) -> AnyPublisher<PlatformImage, Error> {
     _image(url, scale)
   }
 
   /// Returns the cached image for a given URL if there is any.
-  public func cachedImage(for url: URL, scale: CGFloat = 1) -> OSImage? {
+  public func cachedImage(for url: URL, scale: CGFloat = 1) -> PlatformImage? {
     _cachedImage(url, scale)
   }
 }
@@ -80,7 +88,7 @@ extension NetworkImageLoader {
       url matchingURL: URL,
       scale matchingScale: CGFloat = 1,
       withResponse response: P
-    ) -> Self where P: Publisher, P.Output == OSImage, P.Failure == Error {
+    ) -> Self where P: Publisher, P.Output == PlatformImage, P.Failure == Error {
       Self { url, scale in
         if url != matchingURL, scale != matchingScale {
           XCTFail("\(Self.self).image received an unexpected URL: \(url) or scale: \(scale)")
@@ -94,7 +102,7 @@ extension NetworkImageLoader {
 
     public static func mock<P>(
       response: P
-    ) -> Self where P: Publisher, P.Output == OSImage, P.Failure == Error {
+    ) -> Self where P: Publisher, P.Output == PlatformImage, P.Failure == Error {
       Self { _, _ in
         response.eraseToAnyPublisher()
       } cachedImage: { _, _ in
@@ -105,7 +113,7 @@ extension NetworkImageLoader {
     public static var failing: Self {
       Self { _, _ in
         XCTFail("\(Self.self).image is unimplemented")
-        return Just(OSImage())
+        return Empty()
           .setFailureType(to: Error.self)
           .eraseToAnyPublisher()
       } cachedImage: { _, _ in
