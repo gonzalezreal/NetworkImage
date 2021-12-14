@@ -1,4 +1,5 @@
-@_exported import CombineSchedulers
+import Combine
+import CombineSchedulers
 import SwiftUI
 
 /// A view that displays an image located at a given URL.
@@ -70,13 +71,44 @@ import SwiftUI
 /// }
 /// ```
 public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
+  private enum LoadState: Equatable {
+    case empty
+    case success(URL, Image)
+    case failure
+  }
+
   @Environment(\.networkImageStyle) private var imageStyle
   @Environment(\.networkImageLoader) private var imageLoader
-  @Environment(\.networkImageScheduler) private var imageScheduler
 
-  @ObservedObject private var store: NetworkImageStore
+  @State private var loadState = LoadState.empty
+
+  private let url: URL?
   private let placeholder: Placeholder
   private let fallback: Fallback
+
+  private var loadStatePublisher: AnyPublisher<LoadState, Never> {
+    guard let url = self.url else {
+      return Just(.empty).eraseToAnyPublisher()
+    }
+
+    switch loadState {
+    case .success(let loadedURL, _) where loadedURL == url:
+      return Empty().eraseToAnyPublisher()
+    default:
+      return imageLoader.image(for: url)
+        .map { platformImage in
+          #if os(iOS) || os(tvOS) || os(watchOS)
+            let image = Image(uiImage: platformImage)
+          #elseif os(macOS)
+            let image = Image(nsImage: platformImage)
+          #endif
+          return .success(url, image)
+        }
+        .replaceError(with: .failure)
+        .receive(on: UIScheduler.shared)
+        .eraseToAnyPublisher()
+    }
+  }
 
   /// Creates a network image with custom placeholders.
   /// - Parameters:
@@ -88,7 +120,7 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
     @ViewBuilder placeholder: () -> Placeholder,
     @ViewBuilder fallback: () -> Fallback
   ) {
-    store = NetworkImageStore(url: url)
+    self.url = url
     self.placeholder = placeholder()
     self.fallback = fallback()
   }
@@ -99,9 +131,11 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   ///   - placeholderImage: The name of the placeholder image resource.
   public init(url: URL?, placeholderImage name: String)
   where Placeholder == Image, Fallback == Image {
-    store = NetworkImageStore(url: url)
-    placeholder = Image(name)
-    fallback = Image(name)
+    self.init(
+      url: url,
+      placeholder: { Image(name) },
+      fallback: { Image(name) }
+    )
   }
 
   /// Creates a network image that displays a placeholder system image while the image is loading or as a fallback.
@@ -111,35 +145,31 @@ public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View,
   @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(url: URL?, placeholderSystemImage name: String)
   where Placeholder == Image, Fallback == Image {
-    store = NetworkImageStore(url: url)
-    placeholder = Image(systemName: name)
-    fallback = Image(systemName: name)
+    self.init(
+      url: url,
+      placeholder: { Image(systemName: name) },
+      fallback: { Image(systemName: name) }
+    )
   }
 
   public var body: some View {
-    switch store.state {
-    case .notRequested, .placeholder:
-      Color.clear
-        .overlay(placeholder)
-        .onAppear {
-          store.send(
-            .onAppear(
-              environment: .init(
-                imageLoader: imageLoader,
-                uiScheduler: imageScheduler
-              )
-            )
+    Group {
+      switch loadState {
+      case .empty:
+        placeholder
+      case .success(_, let image):
+        imageStyle.makeBody(
+          configuration: NetworkImageStyleConfiguration(
+            image: image,
+            size: .zero
           )
-        }
-    case let .image(osImage):
-      imageStyle.makeBody(
-        configuration: NetworkImageStyleConfiguration(
-          image: Image(osImage: osImage),
-          size: osImage.size
         )
-      )
-    case .fallback:
-      fallback
+      case .failure:
+        fallback
+      }
+    }
+    .onReceive(loadStatePublisher) { loadState in
+      self.loadState = loadState
     }
   }
 }
@@ -148,9 +178,11 @@ extension NetworkImage where Fallback == EmptyView {
   /// Creates a network image without placeholders.
   /// - Parameter url: The URL where the image is located.
   public init(url: URL?) where Placeholder == EmptyView {
-    store = NetworkImageStore(url: url)
-    placeholder = EmptyView()
-    fallback = EmptyView()
+    self.init(
+      url: url,
+      placeholder: { EmptyView() },
+      fallback: { EmptyView() }
+    )
   }
 
   /// Creates a network image that displays a custom placeholder while the image is loading.
@@ -158,9 +190,11 @@ extension NetworkImage where Fallback == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - placeholder: A view builder that creates the view to display while the image is loading.
   public init(url: URL?, @ViewBuilder placeholder: () -> Placeholder) {
-    store = NetworkImageStore(url: url)
-    self.placeholder = placeholder()
-    fallback = EmptyView()
+    self.init(
+      url: url,
+      placeholder: placeholder,
+      fallback: { EmptyView() }
+    )
   }
 }
 
@@ -170,9 +204,11 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
   public init(url: URL?, @ViewBuilder fallback: () -> Fallback) {
-    store = NetworkImageStore(url: url)
-    placeholder = EmptyView()
-    self.fallback = fallback()
+    self.init(
+      url: url,
+      placeholder: { EmptyView() },
+      fallback: fallback
+    )
   }
 
   /// Creates a network image with a fallback image.
@@ -180,9 +216,11 @@ extension NetworkImage where Placeholder == EmptyView {
   ///   - url: The URL where the image is located.
   ///   - fallbackImage: The name of the image resource to display when the URL is `nil` or an error has occurred.
   public init(url: URL?, fallbackImage name: String) where Fallback == Image {
-    store = NetworkImageStore(url: url)
-    placeholder = EmptyView()
-    fallback = Image(name)
+    self.init(
+      url: url,
+      placeholder: { EmptyView() },
+      fallback: { Image(name) }
+    )
   }
 
   /// Creates a network image with a fallback system image.
@@ -192,29 +230,18 @@ extension NetworkImage where Placeholder == EmptyView {
   ///     or an error has occurred.
   @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
-    store = NetworkImageStore(url: url)
-    placeholder = EmptyView()
-    fallback = Image(systemName: name)
+    self.init(
+      url: url,
+      placeholder: { EmptyView() },
+      fallback: { Image(systemName: name) }
+    )
   }
 }
 
 extension View {
-  #if DEBUG
-    /// Sets the image loader for network images within this view.
-    public func networkImageLoader(_ networkImageLoader: NetworkImageLoader) -> some View {
-      environment(\.networkImageLoader, networkImageLoader)
-    }
-  #endif
-
-  /// Sets the scheduler for network images within this view.
-  public func networkImageScheduler(
-    _ networkImageScheduler: AnySchedulerOf<UIScheduler>
-  ) -> some View {
-    environment(\.networkImageScheduler, networkImageScheduler)
-  }
-
-  public func networkImageScheduler(_ networkImageScheduler: UIScheduler) -> some View {
-    environment(\.networkImageScheduler, networkImageScheduler.eraseToAnyScheduler())
+  /// Sets the image loader for network images within this view.
+  public func networkImageLoader(_ networkImageLoader: NetworkImageLoader) -> some View {
+    environment(\.networkImageLoader, networkImageLoader)
   }
 }
 
@@ -223,17 +250,8 @@ extension EnvironmentValues {
     get { self[NetworkImageLoaderKey.self] }
     set { self[NetworkImageLoaderKey.self] = newValue }
   }
-
-  public var networkImageScheduler: AnySchedulerOf<UIScheduler> {
-    get { self[NetworkImageSchedulerKey.self] }
-    set { self[NetworkImageSchedulerKey.self] = newValue }
-  }
 }
 
 private struct NetworkImageLoaderKey: EnvironmentKey {
   static let defaultValue: NetworkImageLoader = .shared
-}
-
-private struct NetworkImageSchedulerKey: EnvironmentKey {
-  static let defaultValue: AnySchedulerOf<UIScheduler> = UIScheduler.shared.animation(.default)
 }

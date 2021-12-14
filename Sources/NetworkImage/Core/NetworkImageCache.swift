@@ -3,8 +3,8 @@ import Foundation
 
 /// Temporarily store images, keyed by their URL.
 public struct NetworkImageCache {
-  private let _image: (URL, CGFloat) -> OSImage?
-  private let _setImage: (OSImage, URL, CGFloat) -> Void
+  private let _image: (URL, CGFloat) -> PlatformImage?
+  private let _setImage: (PlatformImage, URL, CGFloat) -> Void
 
   public init() {
     class Key: NSObject {
@@ -26,7 +26,7 @@ public struct NetworkImageCache {
       }
     }
 
-    let nsCache = NSCache<Key, OSImage>()
+    let nsCache = NSCache<Key, PlatformImage>()
 
     self.init(
       image: { url, scale in
@@ -39,20 +39,20 @@ public struct NetworkImageCache {
   }
 
   init(
-    image: @escaping (URL, CGFloat) -> OSImage?,
-    setImage: @escaping (OSImage, URL, CGFloat) -> Void
+    image: @escaping (URL, CGFloat) -> PlatformImage?,
+    setImage: @escaping (PlatformImage, URL, CGFloat) -> Void
   ) {
     _image = image
     _setImage = setImage
   }
 
   /// Returns the image associated with a given URL.
-  public func image(for url: URL, scale: CGFloat = 1) -> OSImage? {
+  public func image(for url: URL, scale: CGFloat = 1) -> PlatformImage? {
     _image(url, scale)
   }
 
   /// Stores the image in the cache, associated with the specified URL.
-  public func setImage(_ image: OSImage, for url: URL, scale: CGFloat = 1) {
+  public func setImage(_ image: PlatformImage, for url: URL, scale: CGFloat = 1) {
     _setImage(image, url, scale)
   }
 }

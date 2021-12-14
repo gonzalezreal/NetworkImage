@@ -1,40 +1,38 @@
-import Combine
-import Foundation
+import CombineSchedulers
+import SwiftUI
 
-// NB: Unavailable in 3.0.0
+// NB: Unavailable in 4.0.0
 
-@available(*, unavailable, renamed: "NetworkImageCache")
-public protocol ImageCache: AnyObject {
-  func image(for url: URL) -> OSImage?
-  func setImage(_ image: OSImage, for url: URL)
-}
-
-@available(*, unavailable, renamed: "NetworkImageCache")
-public final class ImmediateImageCache: ImageCache {
-  public func image(for _: URL) -> OSImage? {
-    nil
-  }
-
-  public func setImage(_: OSImage, for _: URL) {}
-}
-
-@available(*, unavailable, renamed: "NetworkImageLoader")
-public final class ImageDownloader {
-  public static let shared = ImageDownloader(
-    session: .imageLoading,
-    imageCache: ImmediateImageCache()
+extension EnvironmentValues {
+  @available(
+    *,
+    unavailable,
+    message: "You can use the 'transaction' parameter in NetworkImage to animate state changes."
   )
-
-  public init(session _: URLSession, imageCache _: ImageCache) {}
-
-  public func image(for _: URL) -> AnyPublisher<OSImage, Error> {
-    fatalError("Unavailable")
+  public var networkImageScheduler: AnySchedulerOf<UIScheduler> {
+    get { UIScheduler.shared.eraseToAnyScheduler() }
+    set {}
   }
 }
 
-extension NetworkImage {
-  @available(*, unavailable, renamed: "networkImageScheduler")
-  public func synchronous() -> NetworkImage {
-    fatalError("Unavailable")
+extension View {
+  @available(
+    *,
+    unavailable,
+    message: "You can use the 'transaction' parameter in NetworkImage to animate state changes."
+  )
+  public func networkImageScheduler(
+    _ networkImageScheduler: AnySchedulerOf<UIScheduler>
+  ) -> some View {
+    EmptyView()
+  }
+
+  @available(
+    *,
+    unavailable,
+    message: "You can use the 'transaction' parameter in NetworkImage to animate state changes."
+  )
+  public func networkImageScheduler(_ networkImageScheduler: UIScheduler) -> some View {
+    EmptyView()
   }
 }
