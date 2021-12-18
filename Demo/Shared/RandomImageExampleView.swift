@@ -11,14 +11,18 @@ struct RandomImageExampleView: View {
     "1022", "1023", "1024", "1025",
   ]
 
-  @State var url: URL?
+  @State var url = URL(string: "https://picsum.photos/id/0/300/200")
 
   private var content: some View {
     VStack {
-      NetworkImage(url: self.url)
-        .scaledToFill()
-        .frame(width: 200, height: 200)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+      NetworkImage(url: self.url, transaction: .init(animation: .default)) { image in
+        image.resizable().scaledToFill()
+      } placeholder: {
+        Color.secondary.opacity(0.25)
+      }
+      .id(self.url)
+      .frame(width: 200, height: 200)
+      .clipShape(RoundedRectangle(cornerRadius: 8))
       Button("Random Image") {
         if let id = self.identifiers.randomElement() {
           self.url = URL(string: "https://picsum.photos/id/\(id)/300/200")
