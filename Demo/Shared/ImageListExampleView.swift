@@ -19,14 +19,19 @@ struct ImageListExampleView: View {
     ScrollView {
       LazyVStack {
         ForEach(urls, id: \.self) { url in
-          NetworkImage(url: url)
-            .aspectRatio(1.778, contentMode: .fill)
-            .background(Color.secondary.opacity(0.2))
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .overlay(
-              RoundedRectangle(cornerRadius: 4)
-                .strokeBorder(Color.primary.opacity(0.25), lineWidth: 0.5)
-            )
+          NetworkImage(url: url, transaction: .init(animation: .default)) { image in
+            image
+              .resizable()
+              .scaledToFill()
+          } placeholder: {
+            Color.secondary.opacity(0.25)
+          }
+          .aspectRatio(1.778, contentMode: .fill)
+          .clipShape(RoundedRectangle(cornerRadius: 4))
+          .overlay(
+            RoundedRectangle(cornerRadius: 4)
+              .strokeBorder(Color.primary.opacity(0.25), lineWidth: 0.5)
+          )
         }
       }
       .padding()
