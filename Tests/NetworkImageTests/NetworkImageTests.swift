@@ -15,148 +15,106 @@
       private let platformName = "tvOS"
     #endif
 
-    func testImage() {
-      let view = NetworkImage(url: Fixtures.anyImageURL)
-        .networkImageLoader(
-          .mock(
-            url: Fixtures.anyImageURL,
-            withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
-          )
-        )
-        .scaledToFill()
-        .frame(width: 300, height: 300)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    func testImageInVerticalStack() {
+    @available(iOS 14.0, tvOS 14.0, *)
+    func testDefaultNetworkImageContent() {
       let view = VStack {
+        NetworkImage(url: nil)
+          .frame(width: 150, height: 150)
         NetworkImage(url: Fixtures.anyImageURL)
+          .frame(width: 150, height: 150)
+          .clipped()
           .networkImageLoader(
             .mock(
               url: Fixtures.anyImageURL,
               withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
             )
           )
-          .scaledToFill()
-          .frame(width: 300, height: 300)
-          .clipShape(RoundedRectangle(cornerRadius: 8))
+        NetworkImage(url: Fixtures.anyImageURL, scale: 2)
+          .frame(width: 150, height: 150)
+          .clipped()
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              scale: 2,
+              withResponse: Just(Fixtures.anyImage2x).setFailureType(to: Error.self)
+            )
+          )
       }
 
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }
 
-    func testEmptyPlaceholder() {
-      let testScheduler = DispatchQueue.test
-      let view = NetworkImage(url: Fixtures.anyImageURL)
-        .networkImageLoader(
-          .mock(
-            url: Fixtures.anyImageURL,
-            withResponse: Just(Fixtures.anyImage)
-              .setFailureType(to: Error.self)
-              .delay(for: .seconds(1), scheduler: testScheduler)
+    func testModifiableContentAndPlaceholder() {
+      func testImage(url: URL?) -> some View {
+        NetworkImage(url: url) { image in
+          image.resizable().scaledToFill()
+        } placeholder: {
+          Color.yellow
+        }
+        .frame(width: 150, height: 150)
+        .clipped()
+      }
+
+      let view = VStack {
+        testImage(url: nil)
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
+            )
           )
-        )
-        .frame(width: 300, height: 300)
-        .background(Color.yellow)
-
-      testScheduler.advance()
-
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    func testEmptyFallback() {
-      let view = NetworkImage(url: Fixtures.anyImageURL)
-        .networkImageLoader(
-          .mock(
-            url: Fixtures.anyImageURL,
-            withResponse: Fail(error: Fixtures.anyError as Error)
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Fail(error: Fixtures.anyError as Error)
+            )
           )
-        )
-        .frame(width: 300, height: 300)
+      }
+
+      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
+    }
+
+    @available(iOS 14.0, tvOS 14.0, *)
+    func testModifiableContentPlaceholderAndFallback() {
+      func testImage(url: URL?) -> some View {
+        NetworkImage(url: url) { image in
+          image.resizable().scaledToFill()
+        } placeholder: {
+          ProgressView()
+        } fallback: {
+          Image(systemName: "photo")
+        }
+        .frame(width: 150, height: 150)
+        .clipped()
         .background(Color.yellow)
+      }
 
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    @available(iOS 14.0, tvOS 14.0, *)
-    func testCustomPlaceholder() {
-      let testScheduler = DispatchQueue.test
-      let view = NetworkImage(
-        url: Fixtures.anyImageURL,
-        placeholder: { ProgressView() }
-      )
-      .networkImageLoader(
-        .mock(
-          url: Fixtures.anyImageURL,
-          withResponse: Fail(error: Fixtures.anyError as Error)
-            .delay(for: .seconds(1), scheduler: testScheduler)
-        )
-      )
-      .frame(width: 300, height: 300)
-      .background(Color.yellow)
-
-      testScheduler.advance()
-
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    func testCustomFallback() {
-      let view = NetworkImage(
-        url: Fixtures.anyImageURL,
-        fallback: { Text("Failed!").padding() }
-      )
-      .networkImageLoader(
-        .mock(
-          url: Fixtures.anyImageURL,
-          withResponse: Fail(error: Fixtures.anyError as Error)
-        )
-      )
-      .frame(width: 300, height: 300)
-      .background(Color.yellow)
-
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    @available(iOS 14.0, tvOS 14.0, *)
-    func testImagePlaceholder() {
-      let testScheduler = DispatchQueue.test
-      let view = NetworkImage(
-        url: Fixtures.anyImageURL,
-        placeholderSystemImage: "photo.fill"
-      )
-      .networkImageLoader(
-        .mock(
-          url: Fixtures.anyImageURL,
-          withResponse: Fail(error: Fixtures.anyError as Error)
-            .delay(for: .seconds(1), scheduler: testScheduler)
-        )
-      )
-      .frame(width: 300, height: 300)
-      .foregroundColor(Color.primary.opacity(0.5))
-      .background(Color.yellow)
-
-      testScheduler.advance()
-
-      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
-    }
-
-    @available(iOS 14.0, tvOS 14.0, *)
-    func testImageFallback() {
-      let view = NetworkImage(
-        url: Fixtures.anyImageURL,
-        fallbackSystemImage: "photo.fill"
-      )
-      .networkImageLoader(
-        .mock(
-          url: Fixtures.anyImageURL,
-          withResponse: Fail(error: Fixtures.anyError as Error)
-        )
-      )
-      .frame(width: 300, height: 300)
-      .foregroundColor(Color.primary.opacity(0.5))
-      .background(Color.yellow)
+      let view = VStack {
+        testImage(url: nil)
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Empty().setFailureType(to: Error.self)
+            )
+          )
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
+            )
+          )
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Fail(error: Fixtures.anyError as Error)
+            )
+          )
+      }
 
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }

@@ -12,6 +12,7 @@ enum Fixtures {
   static let anyResponse = Data(base64Encoded: "Z29uemFsZXpyZWFs")!
 
   static let anyImage = try! decodeImage(from: anyImageResponse, scale: 1)
+  static let anyImage2x = try! decodeImage(from: anyImageResponse, scale: 2)
   static let anyError = NetworkImageError.badStatus(500)
 }
 

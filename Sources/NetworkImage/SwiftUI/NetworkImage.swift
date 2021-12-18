@@ -70,171 +70,175 @@ import SwiftUI
 ///   }
 /// }
 /// ```
-public struct NetworkImage<Placeholder, Fallback>: View where Placeholder: View, Fallback: View {
-  private enum LoadState: Equatable {
+public struct NetworkImage<Content>: View where Content: View {
+  private enum ViewState: Equatable {
     case empty
     case success(URL, Image)
     case failure
-  }
 
-  @Environment(\.networkImageStyle) private var imageStyle
-  @Environment(\.networkImageLoader) private var imageLoader
-
-  @State private var loadState = LoadState.empty
-
-  private let url: URL?
-  private let placeholder: Placeholder
-  private let fallback: Fallback
-
-  private var loadStatePublisher: AnyPublisher<LoadState, Never> {
-    guard let url = self.url else {
-      return Just(.empty).eraseToAnyPublisher()
+    var image: Image? {
+      guard case .success(_, let image) = self else {
+        return nil
+      }
+      return image
     }
 
-    switch loadState {
-    case .success(let loadedURL, _) where loadedURL == url:
+    var url: URL? {
+      guard case .success(let url, _) = self else {
+        return nil
+      }
+      return url
+    }
+  }
+
+  @Environment(\.networkImageLoader) private var imageLoader
+  @State private var viewState = ViewState.empty
+
+  private var url: URL?
+  private var scale: CGFloat
+  private var transaction: Transaction
+  private var content: (ViewState) -> Content
+
+  private var viewStatePublisher: AnyPublisher<ViewState, Never> {
+    switch url {
+    case .some(let url) where url == viewState.url:
+      // Avoid loading the same image again after the layout phase
       return Empty().eraseToAnyPublisher()
-    default:
-      return imageLoader.image(for: url)
-        .map { platformImage in
-          #if os(iOS) || os(tvOS) || os(watchOS)
-            let image = Image(uiImage: platformImage)
-          #elseif os(macOS)
-            let image = Image(nsImage: platformImage)
-          #endif
-          return .success(url, image)
-        }
+    case .some(let url):
+      return imageLoader.image(for: url, scale: scale)
+        .map { .success(url, .init(platformImage: $0)) }
         .replaceError(with: .failure)
         .receive(on: UIScheduler.shared)
         .eraseToAnyPublisher()
+    case .none:
+      return Just(.failure).eraseToAnyPublisher()
     }
   }
 
-  /// Creates a network image with custom placeholders.
+  /// Loads and displays an image from the specified URL.
+  ///
+  /// - Parameters:
+  ///   - url: The URL of the image to display.
+  ///   - scale: The scale to use for the image. The default is `1`.
+  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+  public init(url: URL?, scale: CGFloat = 1) where Content == DefaultNetworkImageContent {
+    self.init(
+      url: url,
+      scale: scale,
+      transaction: .init(),
+      content: { viewState in
+        DefaultNetworkImageContent(image: viewState.image)
+      }
+    )
+  }
+
+  /// Loads and displays a modifiable image from the specified URL using a
+  /// custom placeholder until the image loads.
   /// - Parameters:
   ///   - url: The URL where the image is located.
-  ///   - placeholder: A view builder that creates the view to display while the image is loading.
-  ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
-  public init(
+  ///   - scale: The scale to use for the image. The default is `1`.
+  ///   - transaction: The transaction to use when the state changes.
+  ///   - content: A closure that takes the loaded image as an input, and
+  ///     returns the view to show. You can return the image directly, or
+  ///     modify it as needed before returning it.
+  ///   - placeholder: A closure that returns the view to display while the image is loading.
+  public init<P, I>(
     url: URL?,
-    @ViewBuilder placeholder: () -> Placeholder,
-    @ViewBuilder fallback: () -> Fallback
+    scale: CGFloat = 1,
+    transaction: Transaction = .init(),
+    @ViewBuilder content: @escaping (Image) -> I,
+    @ViewBuilder placeholder: @escaping () -> P
+  ) where Content == _ConditionalContent<P, I>, P: View, I: View {
+    self.init(
+      url: url,
+      scale: scale,
+      transaction: transaction,
+      content: { viewState in
+        switch viewState {
+        case .empty, .failure:
+          placeholder()
+        case .success(_, let image):
+          content(image)
+        }
+      }
+    )
+  }
+
+  /// Loads and displays a modifiable image from the specified URL using a custom placeholder
+  /// until the image loads and a custom fallback if the image fails to load or the URL is `nil`.
+  /// - Parameters:
+  ///   - url: The URL where the image is located.
+  ///   - scale: The scale to use for the image. The default is `1`.
+  ///   - transaction: The transaction to use when the state changes.
+  ///   - content: A closure that takes the loaded image as an input, and
+  ///     returns the view to show. You can return the image directly, or
+  ///     modify it as needed before returning it.
+  ///   - placeholder: A closure that returns the view to display while the image is loading.
+  ///   - fallback: A closure that returns the view to display when the URL is `nil` or an error has occurred.
+  public init<P, I, F>(
+    url: URL?,
+    scale: CGFloat = 1,
+    transaction: Transaction = .init(),
+    @ViewBuilder content: @escaping (Image) -> I,
+    @ViewBuilder placeholder: @escaping () -> P,
+    @ViewBuilder fallback: @escaping () -> F
+  ) where Content == _ConditionalContent<_ConditionalContent<P, I>, F>, P: View, I: View, F: View {
+    self.init(
+      url: url,
+      scale: scale,
+      transaction: transaction,
+      content: { viewState in
+        switch viewState {
+        case .empty:
+          placeholder()
+        case .success(_, let image):
+          content(image)
+        case .failure:
+          fallback()
+        }
+      }
+    )
+  }
+
+  private init(
+    url: URL?,
+    scale: CGFloat,
+    transaction: Transaction,
+    @ViewBuilder content: @escaping (ViewState) -> Content
   ) {
     self.url = url
-    self.placeholder = placeholder()
-    self.fallback = fallback()
-  }
-
-  /// Creates a network image that displays a placeholder image while the image is loading or as a fallback.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - placeholderImage: The name of the placeholder image resource.
-  public init(url: URL?, placeholderImage name: String)
-  where Placeholder == Image, Fallback == Image {
-    self.init(
-      url: url,
-      placeholder: { Image(name) },
-      fallback: { Image(name) }
-    )
-  }
-
-  /// Creates a network image that displays a placeholder system image while the image is loading or as a fallback.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - placeholderSystemImage: The name of the system image that will be used as a placeholder.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-  public init(url: URL?, placeholderSystemImage name: String)
-  where Placeholder == Image, Fallback == Image {
-    self.init(
-      url: url,
-      placeholder: { Image(systemName: name) },
-      fallback: { Image(systemName: name) }
-    )
+    self.scale = scale
+    self.transaction = transaction
+    self.content = content
   }
 
   public var body: some View {
-    Group {
-      switch loadState {
-      case .empty:
-        placeholder
-      case .success(_, let image):
-        imageStyle.makeBody(
-          configuration: NetworkImageStyleConfiguration(
-            image: image,
-            size: .zero
-          )
-        )
-      case .failure:
-        fallback
+    content(self.viewState)
+      .onReceive(viewStatePublisher) { viewState in
+        withTransaction(self.transaction) {
+          self.viewState = viewState
+        }
       }
-    }
-    .onReceive(loadStatePublisher) { loadState in
-      self.loadState = loadState
-    }
   }
 }
 
-extension NetworkImage where Fallback == EmptyView {
-  /// Creates a network image without placeholders.
-  /// - Parameter url: The URL where the image is located.
-  public init(url: URL?) where Placeholder == EmptyView {
-    self.init(
-      url: url,
-      placeholder: { EmptyView() },
-      fallback: { EmptyView() }
-    )
-  }
+@available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+public struct DefaultNetworkImageContent: View {
+  var image: Image?
 
-  /// Creates a network image that displays a custom placeholder while the image is loading.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - placeholder: A view builder that creates the view to display while the image is loading.
-  public init(url: URL?, @ViewBuilder placeholder: () -> Placeholder) {
-    self.init(
-      url: url,
-      placeholder: placeholder,
-      fallback: { EmptyView() }
-    )
+  public var body: some View {
+    (image ?? .init(platformImage: .init()).resizable())
+      .redacted(reason: image == nil ? .placeholder : [])
   }
 }
 
-extension NetworkImage where Placeholder == EmptyView {
-  /// Creates a network image with a fallback view.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - fallback: A view builder that creates the view to display when the URL is `nil` or an error has occurred.
-  public init(url: URL?, @ViewBuilder fallback: () -> Fallback) {
-    self.init(
-      url: url,
-      placeholder: { EmptyView() },
-      fallback: fallback
-    )
-  }
-
-  /// Creates a network image with a fallback image.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - fallbackImage: The name of the image resource to display when the URL is `nil` or an error has occurred.
-  public init(url: URL?, fallbackImage name: String) where Fallback == Image {
-    self.init(
-      url: url,
-      placeholder: { EmptyView() },
-      fallback: { Image(name) }
-    )
-  }
-
-  /// Creates a network image with a fallback system image.
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - fallbackSystemImage: The name of the system image to display when the URL is `nil`
-  ///     or an error has occurred.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-  public init(url: URL?, fallbackSystemImage name: String) where Fallback == Image {
-    self.init(
-      url: url,
-      placeholder: { EmptyView() },
-      fallback: { Image(systemName: name) }
-    )
+extension Image {
+  init(platformImage: PlatformImage) {
+    #if os(iOS) || os(tvOS) || os(watchOS)
+      self.init(uiImage: platformImage)
+    #elseif os(macOS)
+      self.init(nsImage: platformImage)
+    #endif
   }
 }
 
