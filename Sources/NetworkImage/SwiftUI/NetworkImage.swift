@@ -9,67 +9,42 @@ import SwiftUI
 ///
 /// You create a network image, in its simplest form, by providing the image URL.
 ///
-/// ```swift
-/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
-/// ```
+///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+///       .frame(width: 300, height: 200)
 ///
-/// You can also provide the name of a placeholder image that the view will display while the image is loading or, as
-/// a fallback, if an error occurs or the URL is `nil`.
+/// To manipulate the loaded image, use the `content` parameter.
 ///
-/// ```swift
-/// NetworkImage(
-///   url: URL(string: "https://picsum.photos/id/237/300/200"),
-///   placeholderSystemImage: "photo.fill"
-/// )
-/// ```
-///
-/// If you want, you can only provide a fallback image. A network image view only displays this image if an error occurs
-/// or when the URL is `nil`.
-///
-/// ```swift
-/// NetworkImage(
-///   url: URL(string: "https://picsum.photos/id/237/300/200"),
-///   fallbackSystemImage: "photo.fill"
-/// )
-/// ```
-///
-/// It is also possible to create network images using views to compose the network image's placeholders
-/// programmatically.
-///
-/// ```swift
-/// NetworkImage(url: movie.posterURL) {
-///   ProgressView()
-/// } fallback: {
-///   Text(movie.title)
-///     .padding()
-/// }
-/// ```
-///
-/// ### Styling Network Images
-///
-/// You can customize the appearance of network images by creating styles that conform to the
-/// `NetworkImageStyle` protocol. To set a specific style for all network images within a view, use
-/// the `networkImageStyle(_:)` modifier. In the following example, a custom style adds a grayscale
-/// effect to all the network image views within the enclosing `VStack`:
-///
-/// ```swift
-/// struct ContentView: View {
-///   var body: some View {
-///     VStack {
-///       NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
-///       NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
+///       image.resizable().scaledToFill()
 ///     }
-///     .networkImageStyle(GrayscaleNetworkImageStyle())
-///   }
-/// }
-/// struct GrayscaleNetworkImageStyle: NetworkImageStyle {
-///   func makeBody(configuration: Configuration) -> some View {
-///     configuration.image
-///       .resizable()
-///       .grayscale(0.99)
-///   }
-/// }
-/// ```
+///     .frame(width: 150, height: 150)
+///     .clipped()
+///
+/// The view displays a standard placeholder that fills the available space until the image loads. You can
+/// specify a custom placeholder by using the `placeholder` parameter.
+///
+///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
+///       image.resizable().scaledToFill()
+///     } placeholder: {
+///       Color.yellow // Shown while the image is loaded or an error occurs
+///     }
+///     .frame(width: 150, height: 150)
+///     .clipped()
+///
+/// It is also possible to specify a custom fallback placeholder that the view will display if there is an
+/// error or the URL is `nil`.
+///
+///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
+///       image.resizable().scaledToFill()
+///     } placeholder: {
+///       ProgressView() // Shown while the image is loaded
+///     } fallback: {
+///       Image(systemName: "photo") // Shown when an error occurs or the URL is nil
+///     }
+///     .frame(width: 150, height: 150)
+///     .clipped()
+///     .background(Color.yellow)
+///
 public struct NetworkImage<Content>: View where Content: View {
   private enum ViewState: Equatable {
     case empty
