@@ -6,7 +6,7 @@ struct PlaceholderExampleView: View {
   let delayedInvalidURL = URL(string: "https://deelay.me/2000/https://example.com")
 
   private func exampleImage(url: URL?) -> some View {
-    NetworkImage(url: url) { image in
+    NetworkImage(url: url, transaction: .init(animation: .default)) { image in
       image
     } placeholder: {
       ProgressView()

@@ -115,25 +115,47 @@ public struct NetworkImage<Content>: View where Content: View {
     }
   }
 
-  /// Loads and displays an image from the specified URL.
+  /// Loads and displays an image from the specified URL using
+  /// a default placeholder until the image loads.
   ///
   /// - Parameters:
   ///   - url: The URL of the image to display.
   ///   - scale: The scale to use for the image. The default is `1`.
   @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-  public init(url: URL?, scale: CGFloat = 1) where Content == DefaultNetworkImageContent {
+  public init(url: URL?, scale: CGFloat = 1) where Content == RedactedImage<Image> {
+    self.init(url: url, scale: scale, transaction: .init(), content: { $0 })
+  }
+
+  /// Loads and displays a modifiable image from the specified URL using a
+  /// default placeholder until the image loads.
+  ///
+  /// - Parameters:
+  ///   - url: The URL where the image is located.
+  ///   - scale: The scale to use for the image. The default is `1`.
+  ///   - transaction: The transaction to use when the state changes.
+  ///   - content: A closure that takes the loaded image as an input, and
+  ///     returns the view to show. You can return the image directly, or
+  ///     modify it as needed before returning it.
+  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+  public init<I>(
+    url: URL?,
+    scale: CGFloat = 1,
+    transaction: Transaction = .init(),
+    @ViewBuilder content: @escaping (Image) -> I
+  ) where Content == RedactedImage<I>, I: View {
     self.init(
       url: url,
       scale: scale,
-      transaction: .init(),
+      transaction: transaction,
       content: { viewState in
-        DefaultNetworkImageContent(image: viewState.image)
+        RedactedImage(image: viewState.image, content: content)
       }
     )
   }
 
   /// Loads and displays a modifiable image from the specified URL using a
   /// custom placeholder until the image loads.
+  ///
   /// - Parameters:
   ///   - url: The URL where the image is located.
   ///   - scale: The scale to use for the image. The default is `1`.
@@ -166,6 +188,7 @@ public struct NetworkImage<Content>: View where Content: View {
 
   /// Loads and displays a modifiable image from the specified URL using a custom placeholder
   /// until the image loads and a custom fallback if the image fails to load or the URL is `nil`.
+  ///
   /// - Parameters:
   ///   - url: The URL where the image is located.
   ///   - scale: The scale to use for the image. The default is `1`.
@@ -223,12 +246,17 @@ public struct NetworkImage<Content>: View where Content: View {
 }
 
 @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-public struct DefaultNetworkImageContent: View {
+public struct RedactedImage<Content>: View where Content: View {
   var image: Image?
+  var content: (Image) -> Content
 
   public var body: some View {
-    (image ?? .init(platformImage: .init()).resizable())
-      .redacted(reason: image == nil ? .placeholder : [])
+    if let image = self.image {
+      content(image)
+    } else {
+      Image(platformImage: .init()).resizable()
+        .redacted(reason: .placeholder)
+    }
   }
 }
 

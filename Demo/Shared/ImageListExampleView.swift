@@ -20,11 +20,7 @@ struct ImageListExampleView: View {
       LazyVStack {
         ForEach(urls, id: \.self) { url in
           NetworkImage(url: url, transaction: .init(animation: .default)) { image in
-            image
-              .resizable()
-              .scaledToFill()
-          } placeholder: {
-            Color.secondary.opacity(0.25)
+            image.resizable().scaledToFill()
           }
           .aspectRatio(1.778, contentMode: .fill)
           .clipShape(RoundedRectangle(cornerRadius: 4))

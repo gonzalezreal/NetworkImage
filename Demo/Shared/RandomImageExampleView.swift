@@ -17,8 +17,6 @@ struct RandomImageExampleView: View {
     VStack {
       NetworkImage(url: self.url, transaction: .init(animation: .default)) { image in
         image.resizable().scaledToFill()
-      } placeholder: {
-        Color.secondary.opacity(0.25)
       }
       .id(self.url)
       .frame(width: 200, height: 200)
