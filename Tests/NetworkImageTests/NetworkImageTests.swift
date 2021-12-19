@@ -16,7 +16,7 @@
     #endif
 
     @available(iOS 14.0, tvOS 14.0, *)
-    func testDefaultNetworkImageContent() {
+    func testDefaultPlaceholder() {
       let view = VStack {
         NetworkImage(url: nil)
           .frame(width: 150, height: 150)
@@ -44,7 +44,38 @@
       assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
     }
 
-    func testModifiableContentAndPlaceholder() {
+    @available(iOS 14.0, tvOS 14.0, *)
+    func testModifiableContent() {
+      func testImage(url: URL?) -> some View {
+        NetworkImage(url: url) { image in
+          image.resizable().scaledToFill()
+        }
+        .frame(width: 150, height: 150)
+        .clipped()
+      }
+
+      let view = VStack {
+        testImage(url: nil)
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Just(Fixtures.anyImage).setFailureType(to: Error.self)
+            )
+          )
+        testImage(url: Fixtures.anyImageURL)
+          .networkImageLoader(
+            .mock(
+              url: Fixtures.anyImageURL,
+              withResponse: Fail(error: Fixtures.anyError as Error)
+            )
+          )
+      }
+
+      assertSnapshot(matching: view, as: .image(layout: layout), named: platformName)
+    }
+
+    func testModifiableContentAndCustomPlaceholder() {
       func testImage(url: URL?) -> some View {
         NetworkImage(url: url) { image in
           image.resizable().scaledToFill()
@@ -77,7 +108,7 @@
     }
 
     @available(iOS 14.0, tvOS 14.0, *)
-    func testModifiableContentPlaceholderAndFallback() {
+    func testModifiableContentCustomPlaceholderAndFallback() {
       func testImage(url: URL?) -> some View {
         NetworkImage(url: url) { image in
           image.resizable().scaledToFill()
