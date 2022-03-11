@@ -46,48 +46,14 @@ import SwiftUI
 ///     .background(Color.yellow)
 ///
 public struct NetworkImage<Content>: View where Content: View {
-  private enum ViewState: Equatable {
-    case empty
-    case success(URL, Image)
-    case failure
-
-    var image: Image? {
-      guard case .success(_, let image) = self else {
-        return nil
-      }
-      return image
-    }
-
-    var url: URL? {
-      guard case .success(let url, _) = self else {
-        return nil
-      }
-      return url
-    }
-  }
-
   @Environment(\.networkImageLoader) private var imageLoader
-  @State private var viewState = ViewState.empty
+  @ObservedObject private var viewModel: NetworkImageViewModel
 
-  private var url: URL?
-  private var scale: CGFloat
   private var transaction: Transaction
-  private var content: (ViewState) -> Content
+  private var content: (NetworkImageViewModel.State) -> Content
 
-  private var viewStatePublisher: AnyPublisher<ViewState, Never> {
-    switch url {
-    case .some(let url) where url == viewState.url:
-      // Avoid loading the same image again after the layout phase
-      return Empty().eraseToAnyPublisher()
-    case .some(let url):
-      return imageLoader.image(for: url, scale: scale)
-        .map { .success(url, .init(platformImage: $0)) }
-        .replaceError(with: .failure)
-        .receive(on: UIScheduler.shared)
-        .eraseToAnyPublisher()
-    case .none:
-      return Just(.failure).eraseToAnyPublisher()
-    }
+  private var context: NetworkImageViewModel.Context {
+    .init(transaction: self.transaction, imageLoader: self.imageLoader)
   }
 
   /// Loads and displays an image from the specified URL using
@@ -122,8 +88,8 @@ public struct NetworkImage<Content>: View where Content: View {
       url: url,
       scale: scale,
       transaction: transaction,
-      content: { viewState in
-        RedactedImage(image: viewState.image, content: content)
+      content: { state in
+        RedactedImage(image: state.image, content: content)
       }
     )
   }
@@ -150,11 +116,11 @@ public struct NetworkImage<Content>: View where Content: View {
       url: url,
       scale: scale,
       transaction: transaction,
-      content: { viewState in
-        switch viewState {
+      content: { state in
+        switch state {
         case .empty, .failure:
           placeholder()
-        case .success(_, let image):
+        case .success(let image):
           content(image)
         }
       }
@@ -185,11 +151,11 @@ public struct NetworkImage<Content>: View where Content: View {
       url: url,
       scale: scale,
       transaction: transaction,
-      content: { viewState in
-        switch viewState {
+      content: { state in
+        switch state {
         case .empty:
           placeholder()
-        case .success(_, let image):
+        case .success(let image):
           content(image)
         case .failure:
           fallback()
@@ -202,21 +168,16 @@ public struct NetworkImage<Content>: View where Content: View {
     url: URL?,
     scale: CGFloat,
     transaction: Transaction,
-    @ViewBuilder content: @escaping (ViewState) -> Content
+    @ViewBuilder content: @escaping (NetworkImageViewModel.State) -> Content
   ) {
-    self.url = url
-    self.scale = scale
+    self.viewModel = .init(url: url, scale: scale)
     self.transaction = transaction
     self.content = content
   }
 
   public var body: some View {
-    content(self.viewState)
-      .onReceive(viewStatePublisher) { viewState in
-        withTransaction(self.transaction) {
-          self.viewState = viewState
-        }
-      }
+    self.content(self.viewModel.state)
+      .onAppear { self.viewModel.onAppear(context: self.context) }
   }
 }
 
