@@ -47,12 +47,14 @@ import SwiftUI
 ///
 public struct NetworkImage<Content>: View where Content: View {
   @Environment(\.networkImageLoader) private var imageLoader
-  @ObservedObject private var viewModel: NetworkImageViewModel
+  @StateObject private var viewModel = NetworkImageViewModel()
 
+  private var url: URL?
+  private var scale: CGFloat
   private var transaction: Transaction
   private var content: (NetworkImageViewModel.State) -> Content
 
-  private var context: NetworkImageViewModel.Context {
+  private var environment: NetworkImageViewModel.Environment {
     .init(transaction: self.transaction, imageLoader: self.imageLoader)
   }
 
@@ -62,7 +64,6 @@ public struct NetworkImage<Content>: View where Content: View {
   /// - Parameters:
   ///   - url: The URL of the image to display.
   ///   - scale: The scale to use for the image. The default is `1`.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(url: URL?, scale: CGFloat = 1) where Content == RedactedImage<Image> {
     self.init(url: url, scale: scale, transaction: .init(), content: { $0 })
   }
@@ -77,7 +78,6 @@ public struct NetworkImage<Content>: View where Content: View {
   ///   - content: A closure that takes the loaded image as an input, and
   ///     returns the view to show. You can return the image directly, or
   ///     modify it as needed before returning it.
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init<I>(
     url: URL?,
     scale: CGFloat = 1,
@@ -118,7 +118,7 @@ public struct NetworkImage<Content>: View where Content: View {
       transaction: transaction,
       content: { state in
         switch state {
-        case .empty, .failure:
+        case .notRequested, .loading, .failure:
           placeholder()
         case .success(let image):
           content(image)
@@ -153,7 +153,7 @@ public struct NetworkImage<Content>: View where Content: View {
       transaction: transaction,
       content: { state in
         switch state {
-        case .empty:
+        case .notRequested, .loading:
           placeholder()
         case .success(let image):
           content(image)
@@ -170,18 +170,20 @@ public struct NetworkImage<Content>: View where Content: View {
     transaction: Transaction,
     @ViewBuilder content: @escaping (NetworkImageViewModel.State) -> Content
   ) {
-    self.viewModel = .init(url: url, scale: scale)
+    self.url = url
+    self.scale = scale
     self.transaction = transaction
     self.content = content
   }
 
   public var body: some View {
     self.content(self.viewModel.state)
-      .onAppear { self.viewModel.onAppear(context: self.context) }
+      .onAppear {
+        viewModel.onAppear(url: url, scale: scale, environment: environment)
+      }
   }
 }
 
-@available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
 public struct RedactedImage<Content>: View where Content: View {
   var image: Image?
   var content: (Image) -> Content
