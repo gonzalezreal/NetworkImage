@@ -20,7 +20,6 @@ extension NetworkImage {
   }
 
   @available(*, deprecated, message: "Use one of the other available NetworkImage initializers.")
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(
     url: URL?, placeholderSystemImage name: String
   ) where Content == _ConditionalContent<Image, Image> {
@@ -52,7 +51,6 @@ extension NetworkImage {
   }
 
   @available(*, deprecated, message: "Use one of the other available NetworkImage initializers.")
-  @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, *)
   public init(
     url: URL?, fallbackSystemImage name: String
   ) where Content == _ConditionalContent<_ConditionalContent<EmptyView, Image>, Image> {

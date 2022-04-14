@@ -3,13 +3,14 @@ import CombineSchedulers
 import SwiftUI
 
 final class NetworkImageViewModel: ObservableObject {
-  struct Context {
+  struct Environment {
     var transaction: Transaction
     var imageLoader: NetworkImageLoader
   }
 
   enum State: Equatable {
-    case empty(url: URL, scale: CGFloat)
+    case notRequested
+    case loading
     case success(Image)
     case failure
 
@@ -21,30 +22,32 @@ final class NetworkImageViewModel: ObservableObject {
     }
   }
 
-  @Published private(set) var state: State
+  @Published private(set) var state: State = .notRequested
   private var cancellable: AnyCancellable?
 
-  init(url: URL?, scale: CGFloat) {
-    if let url = url {
-      self.state = .empty(url: url, scale: scale)
-    } else {
-      self.state = .failure
-    }
-  }
-
-  func onAppear(context: Context) {
-    guard case .empty(let url, let scale) = self.state else {
+  func onAppear(url: URL?, scale: CGFloat, environment: Environment) {
+    guard case .notRequested = state else {
       return
     }
 
-    self.cancellable = context.imageLoader.image(for: url, scale: scale)
-      .map { .success(.init(platformImage: $0)) }
-      .replaceError(with: .failure)
-      .receive(on: UIScheduler.shared)
-      .sink { [weak self] state in
-        withTransaction(context.transaction) {
-          self?.state = state
+    update(url: url, scale: scale, environment: environment)
+  }
+
+  private func update(url: URL?, scale: CGFloat, environment: Environment) {
+    if let url = url {
+      state = .loading
+      cancellable = environment.imageLoader.image(for: url, scale: scale)
+        .map { .success(.init(platformImage: $0)) }
+        .replaceError(with: .failure)
+        .receive(on: UIScheduler.shared)
+        .sink { [weak self] state in
+          withTransaction(environment.transaction) {
+            self?.state = state
+          }
         }
-      }
+    } else {
+      cancellable = nil
+      state = .failure
+    }
   }
 }
