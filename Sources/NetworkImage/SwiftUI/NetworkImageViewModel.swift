@@ -11,11 +11,11 @@ final class NetworkImageViewModel: ObservableObject {
   enum State: Equatable {
     case notRequested
     case loading
-    case success(Image)
+    case success(Image, CGSize)
     case failure
 
     var image: Image? {
-      guard case .success(let image) = self else {
+      guard case .success(let image, _) = self else {
         return nil
       }
       return image
@@ -37,7 +37,7 @@ final class NetworkImageViewModel: ObservableObject {
     if let url = url {
       state = .loading
       cancellable = environment.imageLoader.image(for: url, scale: scale)
-        .map { .success(.init(platformImage: $0)) }
+        .map { .success(.init(platformImage: $0), $0.size) }
         .replaceError(with: .failure)
         .receive(on: UIScheduler.shared)
         .sink { [weak self] state in

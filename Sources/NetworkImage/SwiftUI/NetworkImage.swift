@@ -120,7 +120,7 @@ public struct NetworkImage<Content>: View where Content: View {
         switch state {
         case .notRequested, .loading, .failure:
           placeholder()
-        case .success(let image):
+        case .success(let image, _):
           content(image)
         }
       }
@@ -155,8 +155,45 @@ public struct NetworkImage<Content>: View where Content: View {
         switch state {
         case .notRequested, .loading:
           placeholder()
-        case .success(let image):
+        case .success(let image, _):
           content(image)
+        case .failure:
+          fallback()
+        }
+      }
+    )
+  }
+
+  /// Loads and displays a modifiable image from the specified URL using a custom placeholder
+  /// until the image loads and a custom fallback if the image fails to load or the URL is `nil`.
+  ///
+  /// - Parameters:
+  ///   - url: The URL where the image is located.
+  ///   - scale: The scale to use for the image. The default is `1`.
+  ///   - transaction: The transaction to use when the state changes.
+  ///   - content: A closure that takes the loaded image and its size as an input, and
+  ///     returns the view to show. You can return the image directly, or
+  ///     modify it as needed before returning it.
+  ///   - placeholder: A closure that returns the view to display while the image is loading.
+  ///   - fallback: A closure that returns the view to display when the URL is `nil` or an error has occurred.
+  public init<P, I, F>(
+    url: URL?,
+    scale: CGFloat = 1,
+    transaction: Transaction = .init(),
+    @ViewBuilder content: @escaping (Image, CGSize) -> I,
+    @ViewBuilder placeholder: @escaping () -> P,
+    @ViewBuilder fallback: @escaping () -> F
+  ) where Content == _ConditionalContent<_ConditionalContent<P, I>, F>, P: View, I: View, F: View {
+    self.init(
+      url: url,
+      scale: scale,
+      transaction: transaction,
+      content: { state in
+        switch state {
+        case .notRequested, .loading:
+          placeholder()
+        case let .success(image, size):
+          content(image, size)
         case .failure:
           fallback()
         }
