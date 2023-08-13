@@ -2,18 +2,21 @@ import NetworkImage
 import SwiftUI
 
 struct PlaceholderExampleView: View {
-  let delayedURL = URL(string: "https://deelay.me/2000/https://picsum.photos/id/1025/300/200")
-  let delayedInvalidURL = URL(string: "https://deelay.me/2000/https://example.com")
+  private let url = URL(string: "https://picsum.photos/id/1025/300/200")
+  private let invalidURL = URL(string: "https://example.com")
 
   private func exampleImage(url: URL?) -> some View {
-    NetworkImage(url: url, transaction: .init(animation: .default)) { image in
-      image
-    } placeholder: {
-      ProgressView()
-    } fallback: {
-      Image(systemName: "photo.fill")
-        .imageScale(.large)
-        .blendMode(.overlay)
+    NetworkImage(url: url, transaction: .init(animation: .default)) { state in
+      switch state {
+      case .empty:
+        ProgressView()
+      case .success(let image, _):
+        image
+      case .failure:
+        Image(systemName: "photo.fill")
+          .imageScale(.large)
+          .blendMode(.overlay)
+      }
     }
     .frame(width: 200, height: 200)
     .background(Color.secondary.opacity(0.25))
@@ -22,13 +25,14 @@ struct PlaceholderExampleView: View {
 
   private var content: some View {
     VStack(spacing: 8) {
-      Text("This example is using a delay proxy to simulate the slow loading of images.")
+      Text("This example uses a custom image loader that delays the loading of images.")
         .padding()
 
-      exampleImage(url: delayedURL)
-      exampleImage(url: delayedInvalidURL)
+      self.exampleImage(url: self.url)
+      self.exampleImage(url: self.invalidURL)
     }
     .navigationTitle("Placeholders and fallbacks")
+    .networkImageLoader(DelayNetworkImageLoader(delay: 2))
   }
 
   var body: some View {
@@ -37,5 +41,18 @@ struct PlaceholderExampleView: View {
     #else
       content
     #endif
+  }
+}
+
+private final class DelayNetworkImageLoader: NetworkImageLoader {
+  private let delay: TimeInterval
+
+  init(delay: TimeInterval) {
+    self.delay = delay
+  }
+
+  func image(with source: ImageSource) async throws -> PlatformImage {
+    try await Task.sleep(nanoseconds: UInt64(self.delay * 1_000_000_000))
+    return try await DefaultNetworkImageLoader.shared.image(with: source)
   }
 }

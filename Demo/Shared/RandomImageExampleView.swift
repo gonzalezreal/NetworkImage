@@ -18,7 +18,6 @@ struct RandomImageExampleView: View {
       NetworkImage(url: self.url, transaction: .init(animation: .default)) { image in
         image.resizable().scaledToFill()
       }
-      .id(self.url)
       .frame(width: 200, height: 200)
       .clipShape(RoundedRectangle(cornerRadius: 8))
       Button("Random Image") {

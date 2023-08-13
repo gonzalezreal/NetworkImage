@@ -1,5 +1,3 @@
-import Combine
-import CombineSchedulers
 import SwiftUI
 
 /// A view that displays an image located at a given URL.
@@ -47,14 +45,13 @@ import SwiftUI
 ///
 public struct NetworkImage<Content>: View where Content: View {
   @Environment(\.networkImageLoader) private var imageLoader
-  @StateObject private var viewModel = NetworkImageViewModel()
+  @StateObject private var model = NetworkImageModel()
 
-  private var url: URL?
-  private var scale: CGFloat
-  private var transaction: Transaction
-  private var content: (NetworkImageViewModel.State) -> Content
+  private let source: ImageSource?
+  private let transaction: Transaction
+  private let content: (NetworkImageState) -> Content
 
-  private var environment: NetworkImageViewModel.Environment {
+  private var environment: NetworkImageModel.Environment {
     .init(transaction: self.transaction, imageLoader: self.imageLoader)
   }
 
@@ -64,8 +61,10 @@ public struct NetworkImage<Content>: View where Content: View {
   /// - Parameters:
   ///   - url: The URL of the image to display.
   ///   - scale: The scale to use for the image. The default is `1`.
-  public init(url: URL?, scale: CGFloat = 1) where Content == RedactedImage<Image> {
-    self.init(url: url, scale: scale, transaction: .init(), content: { $0 })
+  public init(url: URL?, scale: CGFloat = 1) where Content == _OptionalContent<Image> {
+    self.init(url: url, scale: scale) { state in
+      _OptionalContent(state.image)
+    }
   }
 
   /// Loads and displays a modifiable image from the specified URL using a
@@ -83,15 +82,10 @@ public struct NetworkImage<Content>: View where Content: View {
     scale: CGFloat = 1,
     transaction: Transaction = .init(),
     @ViewBuilder content: @escaping (Image) -> I
-  ) where Content == RedactedImage<I>, I: View {
-    self.init(
-      url: url,
-      scale: scale,
-      transaction: transaction,
-      content: { state in
-        RedactedImage(image: state.image, content: content)
-      }
-    )
+  ) where Content == _OptionalContent<I>, I: View {
+    self.init(url: url, scale: scale, transaction: transaction) { state in
+      _OptionalContent(state.image, content: content)
+    }
   }
 
   /// Loads and displays a modifiable image from the specified URL using a
@@ -105,123 +99,77 @@ public struct NetworkImage<Content>: View where Content: View {
   ///     returns the view to show. You can return the image directly, or
   ///     modify it as needed before returning it.
   ///   - placeholder: A closure that returns the view to display while the image is loading.
-  public init<P, I>(
+  public init<I, P>(
     url: URL?,
     scale: CGFloat = 1,
     transaction: Transaction = .init(),
     @ViewBuilder content: @escaping (Image) -> I,
     @ViewBuilder placeholder: @escaping () -> P
-  ) where Content == _ConditionalContent<P, I>, P: View, I: View {
+  ) where Content == _ConditionalContent<I, P>, I: View, P: View {
     self.init(
       url: url,
       scale: scale,
       transaction: transaction,
       content: { state in
-        switch state {
-        case .notRequested, .loading, .failure:
-          placeholder()
-        case .success(let image):
+        if let image = state.image {
           content(image)
+        } else {
+          placeholder()
         }
       }
     )
   }
 
-  /// Loads and displays a modifiable image from the specified URL using a custom placeholder
-  /// until the image loads and a custom fallback if the image fails to load or the URL is `nil`.
-  ///
-  /// - Parameters:
-  ///   - url: The URL where the image is located.
-  ///   - scale: The scale to use for the image. The default is `1`.
-  ///   - transaction: The transaction to use when the state changes.
-  ///   - content: A closure that takes the loaded image as an input, and
-  ///     returns the view to show. You can return the image directly, or
-  ///     modify it as needed before returning it.
-  ///   - placeholder: A closure that returns the view to display while the image is loading.
-  ///   - fallback: A closure that returns the view to display when the URL is `nil` or an error has occurred.
-  public init<P, I, F>(
+  public init(
     url: URL?,
     scale: CGFloat = 1,
     transaction: Transaction = .init(),
-    @ViewBuilder content: @escaping (Image) -> I,
-    @ViewBuilder placeholder: @escaping () -> P,
-    @ViewBuilder fallback: @escaping () -> F
-  ) where Content == _ConditionalContent<_ConditionalContent<P, I>, F>, P: View, I: View, F: View {
-    self.init(
-      url: url,
-      scale: scale,
-      transaction: transaction,
-      content: { state in
-        switch state {
-        case .notRequested, .loading:
-          placeholder()
-        case .success(let image):
-          content(image)
-        case .failure:
-          fallback()
-        }
-      }
-    )
-  }
-
-  private init(
-    url: URL?,
-    scale: CGFloat,
-    transaction: Transaction,
-    @ViewBuilder content: @escaping (NetworkImageViewModel.State) -> Content
+    @ViewBuilder content: @escaping (NetworkImageState) -> Content
   ) {
-    self.url = url
-    self.scale = scale
+    self.source = url.map { ImageSource(url: $0, scale: scale) }
     self.transaction = transaction
     self.content = content
   }
 
   public var body: some View {
-    self.content(self.viewModel.state)
-      .onAppear {
-        viewModel.onAppear(url: url, scale: scale, environment: environment)
-      }
+    if #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
+      self.content(self.model.state.image)
+        .task(id: self.source) {
+          await self.model.onAppear(source: self.source, environment: self.environment)
+        }
+    } else {
+      self.content(self.model.state.image)
+        .modifier(
+          TaskModifier(id: self.source) {
+            await self.model.onAppear(source: self.source, environment: self.environment)
+          }
+        )
+    }
   }
 }
 
-public struct RedactedImage<Content>: View where Content: View {
-  var image: Image?
-  var content: (Image) -> Content
+public struct _OptionalContent<Content>: View where Content: View {
+  private let image: Image?
+  private let content: (Image) -> Content
+
+  init(_ image: Image?, content: @escaping (Image) -> Content) {
+    self.image = image
+    self.content = content
+  }
 
   public var body: some View {
-    if let image = self.image {
-      content(image)
+    if let image {
+      self.content(image)
     } else {
-      Image(platformImage: .init()).resizable()
+      Image(platformImage: .init())
+        .resizable()
         .redacted(reason: .placeholder)
     }
   }
 }
 
-extension Image {
-  init(platformImage: PlatformImage) {
-    #if os(iOS) || os(tvOS) || os(watchOS)
-      self.init(uiImage: platformImage)
-    #elseif os(macOS)
-      self.init(nsImage: platformImage)
-    #endif
+extension _OptionalContent where Content == Image {
+  init(_ image: Image?) {
+    self.init(image, content: { $0 })
   }
-}
-
-extension View {
-  /// Sets the image loader for network images within this view.
-  public func networkImageLoader(_ networkImageLoader: NetworkImageLoader) -> some View {
-    environment(\.networkImageLoader, networkImageLoader)
-  }
-}
-
-extension EnvironmentValues {
-  public var networkImageLoader: NetworkImageLoader {
-    get { self[NetworkImageLoaderKey.self] }
-    set { self[NetworkImageLoaderKey.self] = newValue }
-  }
-}
-
-private struct NetworkImageLoaderKey: EnvironmentKey {
-  static let defaultValue: NetworkImageLoader = .shared
 }

@@ -1,4 +1,3 @@
-import Combine
 import NetworkImage
 import SwiftUI
 
@@ -11,8 +10,13 @@ struct ImageLoaderExampleView: UIViewControllerRepresentable {
 }
 
 class ImageLoaderViewController: UIViewController {
+  private let imageLoader: NetworkImageLoader = .default
   private lazy var imageView = UIImageView()
-  private var cancellables: Set<AnyCancellable> = []
+  private var task: Task<Void, Never>?
+
+  deinit {
+    self.task?.cancel()
+  }
 
   override func loadView() {
     let view = UIView()
@@ -34,21 +38,23 @@ class ImageLoaderViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    self.task = Task {
+      await self.loadImage()
+    }
+  }
 
-    NetworkImageLoader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
-      .map { image in
-        // tint the image with a yellow color
-        UIGraphicsImageRenderer(size: image.size).image { _ in
-          image.draw(at: .zero)
-          UIColor.systemYellow.setFill()
-          UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
-        }
+  private func loadImage() async {
+    do {
+      let image = try await self.imageLoader.image(
+        with: URL(string: "https://picsum.photos/id/237/300/200")!
+      )
+      self.imageView.image = UIGraphicsImageRenderer(size: image.size).image { _ in
+        image.draw(at: .zero)
+        UIColor.systemYellow.setFill()
+        UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
       }
-      .replaceError(with: UIImage(systemName: "photo.fill")!)
-      .receive(on: DispatchQueue.main)
-      .sink(receiveValue: { [imageView] image in
-        imageView.image = image
-      })
-      .store(in: &cancellables)
+    } catch {
+      self.imageView.image = UIImage(systemName: "photo.fill")!
+    }
   }
 }
