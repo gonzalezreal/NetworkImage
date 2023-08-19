@@ -1,5 +1,5 @@
-import XCTest
 import NetworkImage
+import XCTest
 
 final class DefaultNetworkImageCacheTests: XCTestCase {
   func testCacheMiss() {

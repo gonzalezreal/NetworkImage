@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import NetworkImage
 
 final class DefaultNetworkImageLoaderTests: XCTestCase {
