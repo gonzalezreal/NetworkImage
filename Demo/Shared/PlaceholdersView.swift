@@ -1,7 +1,7 @@
 import NetworkImage
 import SwiftUI
 
-struct PlaceholderExampleView: View {
+struct PlaceholdersView: View {
   private let url = URL(string: "https://picsum.photos/id/1025/300/200")
   private let invalidURL = URL(string: "https://example.com")
 
@@ -23,26 +23,30 @@ struct PlaceholderExampleView: View {
     .clipShape(RoundedRectangle(cornerRadius: 8))
   }
 
-  private var content: some View {
-    VStack(spacing: 8) {
-      Text("This example uses a custom image loader that delays the loading of images.")
-        .padding()
+  var body: some View {
+    Form {
+      Section {
+        Text("This example uses a custom image loader that delays the loading of images.")
+      }
 
-      self.exampleImage(url: self.url)
-      self.exampleImage(url: self.invalidURL)
+      Section("Successful image") {
+        self.exampleImage(url: self.url)
+      }
+
+      Section("Failing image") {
+        self.exampleImage(url: self.invalidURL)
+      }
     }
-    .navigationTitle("Placeholders and fallbacks")
     .networkImageLoader(DelayNetworkImageLoader(delay: 2))
   }
+}
 
-  var body: some View {
-    #if os(iOS)
-      content.navigationBarTitleDisplayMode(.inline)
-    #else
-      content
-    #endif
+struct PlaceholdersView_Previews: PreviewProvider {
+  static var previews: some View {
+    PlaceholdersView()
   }
 }
+
 
 private final class DelayNetworkImageLoader: NetworkImageLoader {
   private let delay: TimeInterval

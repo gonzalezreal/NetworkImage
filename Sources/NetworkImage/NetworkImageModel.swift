@@ -22,7 +22,6 @@ final class NetworkImageModel: ObservableObject {
     }
 
     self.state.source = source
-    self.state.image = .empty
 
     let image: NetworkImageState
 

@@ -1,9 +1,9 @@
-import NetworkImage
 import SwiftUI
+import NetworkImage
 
-struct SimpleExampleView: View {
-  private var content: some View {
-    VStack {
+struct ImagesView: View {
+  var body: some View {
+    Form {
       NetworkImage(url: URL(string: "https://picsum.photos/id/1025/300/200"))
         .frame(width: 200, height: 200)
         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -11,14 +11,11 @@ struct SimpleExampleView: View {
         .frame(width: 200, height: 200)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
-    .navigationTitle("Displaying Network Images")
   }
+}
 
-  var body: some View {
-    #if os(iOS)
-      content.navigationBarTitleDisplayMode(.inline)
-    #else
-      content
-    #endif
+struct ImagesView_Previews: PreviewProvider {
+  static var previews: some View {
+    ImagesView()
   }
 }
