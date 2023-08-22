@@ -47,7 +47,6 @@ struct PlaceholdersView_Previews: PreviewProvider {
   }
 }
 
-
 private final class DelayNetworkImageLoader: NetworkImageLoader {
   private let delay: TimeInterval
 

@@ -9,9 +9,9 @@ extension View {
 struct InlineNavigationBarTitleDisplayModeModifier: ViewModifier {
   func body(content: Content) -> some View {
     #if os(iOS) || os(watchOS)
-    content.navigationBarTitleDisplayMode(.inline)
+      content.navigationBarTitleDisplayMode(.inline)
     #else
-    content
+      content
     #endif
   }
 }

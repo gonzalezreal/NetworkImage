@@ -1,5 +1,5 @@
-import SwiftUI
 import NetworkImage
+import SwiftUI
 
 struct ImagesView: View {
   var body: some View {
