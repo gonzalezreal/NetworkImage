@@ -20,8 +20,8 @@ struct ImageListView: View {
           .clipShape(RoundedRectangle(cornerRadius: 4))
           .overlay {
             RoundedRectangle(cornerRadius: 4)
-            // This crashes in Xcode 15 beta 8 when running on visionOS simulator
-            // .strokeBorder(Color.primary.opacity(0.25), lineWidth: 0.5)
+              // This crashes in Xcode 15 beta 8 when running on visionOS simulator
+              // .strokeBorder(Color.primary.opacity(0.25), lineWidth: 0.5)
               .strokeBorder(style: .init(lineWidth: 0.5))
               .foregroundColor(Color.primary.opacity(0.25))
 
