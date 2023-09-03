@@ -5,44 +5,72 @@ import SwiftUI
 /// A network image downloads and displays an image from a given URL; the download is asynchronous,
 /// and the result is cached both in disk and memory.
 ///
-/// You create a network image, in its simplest form, by providing the image URL.
+/// The simplest way of creating a `NetworkImage` view is to pass the image URL to the
+/// ``NetworkImage/init(url:scale:)`` initializer.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
-///       .frame(width: 300, height: 200)
+/// ```swift
+/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
+///   .frame(width: 300, height: 200)
+/// ```
 ///
-/// To manipulate the loaded image, use the `content` parameter.
+/// To manipulate the loaded image, use the `content` parameter in
+/// ``NetworkImage/init(url:scale:transaction:content:)-94eq8``.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-///       image.resizable().scaledToFill()
-///     }
-///     .frame(width: 150, height: 150)
-///     .clipped()
+/// ```swift
+/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
+///   image
+///     .resizable()
+///     .scaledToFill()
+///     .blur(radius: 4)
+/// }
+/// .frame(width: 150, height: 150)
+/// .clipped()
+/// ```
 ///
 /// The view displays a standard placeholder that fills the available space until the image loads. You can
-/// specify a custom placeholder by using the `placeholder` parameter.
+/// specify a custom placeholder by using the `placeholder` parameter in
+/// ``NetworkImage/init(url:scale:transaction:content:placeholder:)``.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-///       image.resizable().scaledToFill()
-///     } placeholder: {
-///       Color.yellow // Shown while the image is loaded or an error occurs
-///     }
-///     .frame(width: 150, height: 150)
-///     .clipped()
+/// ```swift
+/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
+///   image
+///     .resizable()
+///     .scaledToFill()
+/// } placeholder: {
+///   ZStack {
+///     Color.secondary.opacity(0.25)
+///     Image(systemName: "photo.fill")
+///       .imageScale(.large)
+///       .blendMode(.overlay)
+///   }
+/// }
+/// .frame(width: 150, height: 150)
+/// .clipped()
+/// ```
 ///
-/// It is also possible to specify a custom fallback placeholder that the view will display if there is an
-/// error or the URL is `nil`.
+/// To have more control over the image loading process, use
+/// ``NetworkImage/init(url:scale:transaction:content:)-4lwrd``, which has a `content` closure parameter that
+/// receives a ``NetworkImageState`` value indicating the state of the loading operation.
 ///
-///     NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-///       image.resizable().scaledToFill()
-///     } placeholder: {
-///       ProgressView() // Shown while the image is loaded
-///     } fallback: {
-///       Image(systemName: "photo") // Shown when an error occurs or the URL is nil
-///     }
-///     .frame(width: 150, height: 150)
-///     .clipped()
-///     .background(Color.yellow)
-///
+/// ```swift
+/// NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { state in
+///   switch state {
+///   case .empty:
+///     ProgressView()
+///   case .success(let image, let idealSize):
+///     image
+///       .resizable()
+///       .scaledToFill()
+///   case .failure:
+///     Image(systemName: "photo.fill")
+///       .imageScale(.large)
+///       .blendMode(.overlay)
+///   }
+/// }
+/// .frame(width: 150, height: 150)
+/// .background(Color.secondary.opacity(0.25))
+/// .clipped()
+/// ```
 public struct NetworkImage<Content>: View where Content: View {
   @Environment(\.networkImageLoader) private var imageLoader
   @StateObject private var model = NetworkImageModel()
@@ -120,6 +148,13 @@ public struct NetworkImage<Content>: View where Content: View {
     )
   }
 
+  /// Loads and displays a modifiable image from the specified URL, providing custom views for the different loading states.
+  /// - Parameters:
+  ///   - url: The URL where the image is located.
+  ///   - scale: The scale to use for the image. The default is `1`.
+  ///   - transaction: The transaction to use when the state changes.
+  ///   - content: A closure that takes the loading state as an input, and
+  ///     returns the view to display for the specifed state.
   public init(
     url: URL?,
     scale: CGFloat = 1,

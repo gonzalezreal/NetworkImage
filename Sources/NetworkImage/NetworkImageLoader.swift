@@ -1,10 +1,13 @@
 import Foundation
 
+/// A type that loads and caches images.
 public protocol NetworkImageLoader: AnyObject, Sendable {
+  /// Loads and returns the image for a given image source.
   func image(with source: ImageSource) async throws -> PlatformImage
 }
 
 extension NetworkImageLoader {
+  /// Loads and returns the image for a given URL.
   public func image(with url: URL) async throws -> PlatformImage {
     try await self.image(with: .init(url: url))
   }
@@ -12,6 +15,7 @@ extension NetworkImageLoader {
 
 // MARK: - DefaultNetworkImageLoader
 
+/// The default network image loader.
 public actor DefaultNetworkImageLoader {
   private enum Constants {
     static let memoryCapacity = 10 * 1024 * 1024
@@ -24,10 +28,19 @@ public actor DefaultNetworkImageLoader {
 
   private var ongoingTasks: [ImageSource: Task<PlatformImage, Error>] = [:]
 
+  /// Creates a default network image cache.
+  /// - Parameter countLimit: The maximum number of images that the cache should hold. If `0`,
+  ///                         there is no count limit. The default value is `0`.
+
+  /// Creates a default network image loader.
+  /// - Parameters:
+  ///   - cache: The network image cache that this loader will use to store the images.
+  ///   - session: The session that this loader will use to fetch the images.
   public init(cache: NetworkImageCache, session: URLSession) {
     self.init(cache: cache, data: session.data(from:))
   }
 
+  /// A shared network image loader.
   public static let shared = DefaultNetworkImageLoader(
     cache: .default,
     session: .imageLoading(
@@ -86,6 +99,7 @@ extension DefaultNetworkImageLoader: NetworkImageLoader {
 }
 
 extension NetworkImageLoader where Self == DefaultNetworkImageLoader {
+  /// The shared default network image loader.
   public static var `default`: Self {
     .shared
   }
