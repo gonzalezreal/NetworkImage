@@ -102,7 +102,7 @@ Include `"NetworkImage"` as a dependency for your executable target:
 
 Finally, add `import NetworkImage` to your source code.
 
-### Adding MarkdownUI to an Xcode project
+### Adding NetworkImage to an Xcode project
 
 1. From the **File** menu, select **Add Packages…**
 1. Enter `https://github.com/gonzalezreal/NetworkImage` into the
