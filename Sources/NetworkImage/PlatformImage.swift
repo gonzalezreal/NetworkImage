@@ -1,6 +1,6 @@
 import SwiftUI
 
-#if os(iOS) || os(tvOS) || os(watchOS) || (compiler(>=5.9) && os(visionOS))
+#if canImport(UIKit)
   public typealias PlatformImage = UIImage
 #elseif os(macOS)
   public typealias PlatformImage = NSImage
@@ -8,7 +8,7 @@ import SwiftUI
 
 extension PlatformImage {
   static func decoding(data: Data, scale: CGFloat) -> PlatformImage? {
-    #if os(iOS) || os(tvOS) || os(watchOS) || (compiler(>=5.9) && os(visionOS))
+    #if canImport(UIKit)
       return .init(data: data, scale: scale)
     #elseif os(macOS)
       guard let bitmapImageRep = NSBitmapImageRep(data: data) else {
@@ -30,7 +30,7 @@ extension PlatformImage {
 
 extension Image {
   init(platformImage: PlatformImage) {
-    #if os(iOS) || os(tvOS) || os(watchOS) || (compiler(>=5.9) && os(visionOS))
+    #if canImport(UIKit)
       self.init(uiImage: platformImage)
     #elseif os(macOS)
       self.init(nsImage: platformImage)
