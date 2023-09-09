@@ -196,7 +196,7 @@ public struct _OptionalContent<Content>: View where Content: View {
     if let image {
       self.content(image)
     } else {
-      Image(platformImage: .init())
+      Image.empty
         .resizable()
         .redacted(reason: .placeholder)
     }
@@ -206,5 +206,15 @@ public struct _OptionalContent<Content>: View where Content: View {
 extension _OptionalContent where Content == Image {
   init(_ image: Image?) {
     self.init(image, content: { $0 })
+  }
+}
+
+extension Image {
+  fileprivate static var empty: Image {
+    #if canImport(UIKit)
+      Image(uiImage: .init())
+    #elseif os(macOS)
+      Image(nsImage: .init())
+    #endif
   }
 }

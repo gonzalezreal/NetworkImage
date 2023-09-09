@@ -14,23 +14,23 @@ final class DefaultNetworkImageLoaderTests: XCTestCase {
     }
 
     // when
-    async let firstImage = imageLoader.image(with: Fixtures.source)
-    async let secondImage = imageLoader.image(with: Fixtures.anotherSource)
-    async let thirdImage = imageLoader.image(with: Fixtures.source)
+    async let firstImage = imageLoader.image(from: Fixtures.url)
+    async let secondImage = imageLoader.image(from: Fixtures.anotherURL)
+    async let thirdImage = imageLoader.image(from: Fixtures.url)
 
     let images = try await (firstImage, secondImage, thirdImage)
 
     // then
     XCTAssertEqual(loadCount, 2)
     XCTAssertIdentical(images.0, images.2)
-    XCTAssertIdentical(imageCache.image(for: Fixtures.source), images.0)
-    XCTAssertIdentical(imageCache.image(for: Fixtures.anotherSource), images.1)
+    XCTAssertIdentical(imageCache.image(for: Fixtures.url), images.0)
+    XCTAssertIdentical(imageCache.image(for: Fixtures.anotherURL), images.1)
   }
 
   func testImageCache() async throws {
     // given
     let imageCache = DefaultNetworkImageCache()
-    imageCache.setImage(Fixtures.image, for: Fixtures.source)
+    imageCache.setImage(Fixtures.image, for: Fixtures.url)
 
     var loadCount = 0
     let imageLoader = DefaultNetworkImageLoader(cache: imageCache) { _ in
@@ -39,7 +39,7 @@ final class DefaultNetworkImageLoaderTests: XCTestCase {
     }
 
     // when
-    let image = try await imageLoader.image(with: Fixtures.source)
+    let image = try await imageLoader.image(from: Fixtures.url)
 
     // then
     XCTAssertEqual(loadCount, 0)
@@ -55,7 +55,7 @@ final class DefaultNetworkImageLoaderTests: XCTestCase {
     // when
     var capturedError: URLError?
     do {
-      _ = try await imageLoader.image(with: Fixtures.source)
+      _ = try await imageLoader.image(from: Fixtures.url)
       XCTFail("Asynchronous call did not throw an error.")
     } catch {
       capturedError = error as? URLError
@@ -74,7 +74,7 @@ final class DefaultNetworkImageLoaderTests: XCTestCase {
     // when
     var capturedError: URLError?
     do {
-      _ = try await imageLoader.image(with: Fixtures.source)
+      _ = try await imageLoader.image(from: Fixtures.url)
       XCTFail("Asynchronous call did not throw an error.")
     } catch {
       capturedError = error as? URLError

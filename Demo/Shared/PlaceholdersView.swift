@@ -54,8 +54,8 @@ private final class DelayNetworkImageLoader: NetworkImageLoader {
     self.delay = delay
   }
 
-  func image(with source: ImageSource) async throws -> PlatformImage {
+  func image(from url: URL) async throws -> CGImage {
     try await Task.sleep(nanoseconds: UInt64(self.delay * 1_000_000_000))
-    return try await DefaultNetworkImageLoader.shared.image(with: source)
+    return try await DefaultNetworkImageLoader.shared.image(from: url)
   }
 }

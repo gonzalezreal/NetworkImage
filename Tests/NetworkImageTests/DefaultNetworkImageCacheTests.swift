@@ -7,26 +7,19 @@ final class DefaultNetworkImageCacheTests: XCTestCase {
     let cache = DefaultNetworkImageCache()
 
     // when
-    let image = cache.image(for: Fixtures.source)
+    let image = cache.image(for: Fixtures.url)
 
     // then
     XCTAssertNil(image)
-
-    // when
-    cache.setImage(Fixtures.image, for: Fixtures.source)
-    let image2x = cache.image(for: Fixtures.source2x)
-
-    // then
-    XCTAssertNil(image2x)
   }
 
   func testCacheHit() {
     // given
     let cache = DefaultNetworkImageCache()
-    cache.setImage(Fixtures.image, for: Fixtures.source)
+    cache.setImage(Fixtures.image, for: Fixtures.url)
 
     // when
-    let image = cache.image(for: Fixtures.source)
+    let image = cache.image(for: Fixtures.url)
 
     // then
     XCTAssertIdentical(image, Fixtures.image)

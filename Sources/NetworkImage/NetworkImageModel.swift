@@ -26,8 +26,14 @@ final class NetworkImageModel: ObservableObject {
     let image: NetworkImageState
 
     do {
-      let platformImage = try await environment.imageLoader.image(with: source)
-      image = .success(image: .init(platformImage: platformImage), idealSize: platformImage.size)
+      let cgImage = try await environment.imageLoader.image(from: source.url)
+      image = .success(
+        image: .init(decorative: cgImage, scale: source.scale),
+        idealSize: CGSize(
+          width: CGFloat(cgImage.width) / source.scale,
+          height: CGFloat(cgImage.height) / source.scale
+        )
+      )
     } catch {
       image = .failure
     }

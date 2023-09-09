@@ -1,16 +1,11 @@
+import CoreGraphics
 import Foundation
+import ImageIO
 
 /// A type that loads and caches images.
 public protocol NetworkImageLoader: AnyObject, Sendable {
-  /// Loads and returns the image for a given image source.
-  func image(with source: ImageSource) async throws -> PlatformImage
-}
-
-extension NetworkImageLoader {
-  /// Loads and returns the image for a given URL.
-  public func image(with url: URL) async throws -> PlatformImage {
-    try await self.image(with: .init(url: url))
-  }
+  /// Loads and returns the image from a given URL.
+  func image(from url: URL) async throws -> CGImage
 }
 
 // MARK: - DefaultNetworkImageLoader
@@ -26,7 +21,7 @@ public actor DefaultNetworkImageLoader {
   private let data: (URL) async throws -> (Data, URLResponse)
   private let cache: NetworkImageCache
 
-  private var ongoingTasks: [ImageSource: Task<PlatformImage, Error>] = [:]
+  private var ongoingTasks: [URL: Task<CGImage, Error>] = [:]
 
   /// Creates a default network image cache.
   /// - Parameter countLimit: The maximum number of images that the cache should hold. If `0`,
@@ -60,20 +55,20 @@ public actor DefaultNetworkImageLoader {
 }
 
 extension DefaultNetworkImageLoader: NetworkImageLoader {
-  public func image(with source: ImageSource) async throws -> PlatformImage {
-    if let image = self.cache.image(for: source) {
+  public func image(from url: URL) async throws -> CGImage {
+    if let image = self.cache.image(for: url) {
       return image
     }
 
-    if let task = self.ongoingTasks[source] {
+    if let task = self.ongoingTasks[url] {
       return try await task.value
     }
 
-    let task = Task<PlatformImage, Error> {
-      let (data, response) = try await self.data(source.url)
+    let task = Task<CGImage, Error> {
+      let (data, response) = try await self.data(url)
 
       // remove ongoing task
-      self.ongoingTasks.removeValue(forKey: source)
+      self.ongoingTasks.removeValue(forKey: url)
 
       guard let statusCode = (response as? HTTPURLResponse)?.statusCode,
         200..<300 ~= statusCode
@@ -81,18 +76,24 @@ extension DefaultNetworkImageLoader: NetworkImageLoader {
         throw URLError(.badServerResponse)
       }
 
-      guard let image = PlatformImage.decoding(data: data, scale: source.scale) else {
+      guard
+        let source = CGImageSourceCreateWithData(data as CFData, nil),
+        let image = CGImageSourceCreateImageAtIndex(
+          source, 0,
+          [kCGImageSourceShouldCache: true] as CFDictionary
+        )
+      else {
         throw URLError(.cannotDecodeContentData)
       }
 
       // add image to cache
-      self.cache.setImage(image, for: source)
+      self.cache.setImage(image, for: url)
 
       return image
     }
 
     // add ongoing task
-    self.ongoingTasks[source] = task
+    self.ongoingTasks[url] = task
 
     return try await task.value
   }

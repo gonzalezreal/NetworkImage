@@ -1,12 +1,13 @@
+import CoreGraphics
 import Foundation
 
-/// A type that temporarily stores images in memory, keyed by their ``ImageSource`` value.
+/// A type that temporarily stores images in memory, keyed by the URL from which they were loaded.
 public protocol NetworkImageCache: AnyObject, Sendable {
-  /// Returns the image associated with a given source.
-  func image(for source: ImageSource) -> PlatformImage?
+  /// Returns the image associated with a given URL.
+  func image(for url: URL) -> CGImage?
 
-  /// Sets the image of the specified source in the cache.
-  func setImage(_ image: PlatformImage, for source: ImageSource)
+  /// Sets the image for the specified URL in the cache.
+  func setImage(_ image: CGImage, for url: URL)
 }
 
 // MARK: - DefaultNetworkImageCache
@@ -17,7 +18,7 @@ public class DefaultNetworkImageCache {
     static let defaultCountLimit = 100
   }
 
-  private let cache = NSCache<HashableBox<ImageSource>, PlatformImage>()
+  private let cache = NSCache<NSURL, CGImage>()
 
   /// Creates a default network image cache.
   /// - Parameter countLimit: The maximum number of images that the cache should hold. If `0`,
@@ -31,12 +32,12 @@ public class DefaultNetworkImageCache {
 }
 
 extension DefaultNetworkImageCache: NetworkImageCache, @unchecked Sendable {
-  public func image(for source: ImageSource) -> PlatformImage? {
-    self.cache.object(forKey: .init(source))
+  public func image(for url: URL) -> CGImage? {
+    self.cache.object(forKey: url as NSURL)
   }
 
-  public func setImage(_ image: PlatformImage, for source: ImageSource) {
-    self.cache.setObject(image, forKey: .init(source))
+  public func setImage(_ image: CGImage, for url: URL) {
+    self.cache.setObject(image, forKey: url as NSURL)
   }
 }
 
