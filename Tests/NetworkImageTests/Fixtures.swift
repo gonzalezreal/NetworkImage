@@ -1,24 +1,29 @@
+import CoreGraphics
 import Foundation
-
-@testable import NetworkImage
+import ImageIO
 
 enum Fixtures {
-  static let anyImageURL = URL(string: "https://picsum.photos/id/237/300/200")!
-
-  // Photo by Charles Deluvio (https://unsplash.com/@charlesdeluvio)
-  static let anyImageResponse = try! Data(
-    contentsOf: fixtureURL("charles-deluvio-REtZm_TkolU-unsplash.jpg")
-  )
-  static let anyResponse = Data(base64Encoded: "Z29uemFsZXpyZWFs")!
-
-  static let anyImage = try! decodeImage(from: anyImageResponse, scale: 1)
-  static let anyImage2x = try! decodeImage(from: anyImageResponse, scale: 2)
-  static let anyError = NetworkImageError.badStatus(500)
-}
-
-private func fixtureURL(_ fileName: String, file: StaticString = #file) -> URL {
-  URL(fileURLWithPath: "\(file)", isDirectory: false)
-    .deletingLastPathComponent()
-    .appendingPathComponent("__Fixtures__")
-    .appendingPathComponent(fileName)
+  static let url = URL(string: "https://picsum.photos/id/237/300/200")!
+  static let anotherURL = URL(string: "https://picsum.photos/id/1/200/300")!
+  static let imageData = Data(
+    base64Encoded: """
+      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42\
+      mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=
+      """
+  )!
+  static let image = CGImageSourceCreateImageAtIndex(
+    CGImageSourceCreateWithData(imageData as CFData, nil)!, 0, nil
+  )!
+  static let okResponse = HTTPURLResponse(
+    url: url,
+    statusCode: 200,
+    httpVersion: "HTTP/1.1",
+    headerFields: nil
+  )!
+  static let internalServerErrorResponse = HTTPURLResponse(
+    url: url,
+    statusCode: 500,
+    httpVersion: "HTTP/1.1",
+    headerFields: nil
+  )!
 }

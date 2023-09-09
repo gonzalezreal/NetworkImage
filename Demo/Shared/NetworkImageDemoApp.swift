@@ -4,9 +4,7 @@ import SwiftUI
 struct NetworkImageDemoApp: App {
   var body: some Scene {
     WindowGroup {
-      NavigationView {
-        ExampleList()
-      }
+      ContentView()
     }
   }
 }

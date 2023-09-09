@@ -2,17 +2,14 @@
 [![CI](https://github.com/gonzalezreal/NetworkImage/workflows/CI/badge.svg)](https://github.com/gonzalezreal/NetworkImage/actions?query=workflow%3ACI)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fgonzalezreal%2FNetworkImage%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/gonzalezreal/NetworkImage)
-[![contact: @gonzalezreal](https://img.shields.io/badge/contact-@gonzalezreal-blue.svg?style=flat)](https://twitter.com/gonzalezreal)
 
-NetworkImage is a Swift package that provides image downloading, caching, and displaying for your
-SwiftUI apps. It leverages the foundation URLCache, providing persistent and in-memory caches.
+NetworkImage is a Swift package that provides image downloading, caching, and displaying for your SwiftUI apps. It leverages the foundation `URLCache` and `NSCache`, providing persistent and in-memory caches.
 
-You can explore all the capabilities of this package in the
-[companion demo project](Examples/NetworkImageDemo).
+Explore the [companion demo project](Demo) to discover its capabilities.
 
-## Supported Platforms
+## Minimum requirements
 
-You can use `NetworkImage` in the following platforms:
+You can use NetworkImage on the following platforms:
 
 * macOS 11.0+
 * iOS 14.0+
@@ -20,10 +17,11 @@ You can use `NetworkImage` in the following platforms:
 * watchOS 7.0+
 
 ## Usage
+
 A network image downloads and displays an image from a given URL; the download is asynchronous,
 and the result is cached both in disk and memory.
 
-You create a network image, in its simplest form, by providing the image URL.
+The simplest way of creating a `NetworkImage` view is to pass the image URL to the `init(url:scale:)` initializer.
 
 ```swift
 NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200"))
@@ -34,7 +32,10 @@ To manipulate the loaded image, use the `content` parameter.
 
 ```swift
 NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-  image.resizable().scaledToFill()
+  image
+    .resizable()
+    .scaledToFill()
+    .blur(radius: 4)
 }
 .frame(width: 150, height: 150)
 .clipped()
@@ -45,108 +46,65 @@ can specify a custom placeholder by using the `placeholder` parameter.
 
 ```swift
 NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-  image.resizable().scaledToFill()
+  image
+    .resizable()
+    .scaledToFill()
 } placeholder: {
-  Color.yellow // Shown while the image is loaded or an error occurs
-}
-.frame(width: 150, height: 150)
-.clipped()
-```
-
-It is also possible to specify a custom fallback placeholder that the view will display if there is
-an error or the URL is `nil`.
-
-```swift
-NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { image in
-  image.resizable().scaledToFill()
-} placeholder: {
-  ProgressView() // Shown while the image is loaded
-} fallback: {
-  Image(systemName: "photo") // Shown when an error occurs or the URL is nil
-}
-.frame(width: 150, height: 150)
-.clipped()
-.background(Color.yellow)
-```
-
-### Using NetworkImageLoader
-For other use cases outside the scope of SwiftUI, you can download images directly using the
-shared `NetworkImageLoader`. In the following example, a view controller downloads an image
-and applies a transformation to it.
-  
-  ```swift
-  class MyViewController: UIViewController {
-      private lazy var imageView = UIImageView()
-      private var cancellables: Set<AnyCancellable> = []
-
-      override func loadView() {
-          let view = UIView()
-          view.backgroundColor = .systemBackground
-
-          imageView.translatesAutoresizingMaskIntoConstraints = false
-          imageView.backgroundColor = .secondarySystemBackground
-          view.addSubview(imageView)
-
-          NSLayoutConstraint.activate([
-              imageView.widthAnchor.constraint(equalToConstant: 300),
-              imageView.heightAnchor.constraint(equalToConstant: 200),
-              imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-              imageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-          ])
-
-          self.view = view
-      }
-
-      override func viewDidLoad() {
-          super.viewDidLoad()
-
-          NetworkImageLoader.shared.image(for: URL(string: "https://picsum.photos/id/237/300/200")!)
-              .map { image in
-                  // tint the image with a yellow color
-                  UIGraphicsImageRenderer(size: image.size).image { _ in
-                      image.draw(at: .zero)
-                      UIColor.systemYellow.setFill()
-                      UIRectFillUsingBlendMode(CGRect(origin: .zero, size: image.size), .multiply)
-                  }
-              }
-              .replaceError(with: UIImage(systemName: "photo.fill")!)
-              .receive(on: DispatchQueue.main)
-              .sink(receiveValue: { [imageView] image in
-                  imageView.image = image
-              })
-              .store(in: &cancellables)
-      }
+  ZStack {
+    Color.secondary.opacity(0.25)
+    Image(systemName: "photo.fill")
+      .imageScale(.large)
+      .blendMode(.overlay)
   }
+}
+.frame(width: 150, height: 150)
+.clipped()
 ```
 
-### NetworkImage and Testing
-NetworkImage is implemented with testing in mind and provides view modifiers to stub image
-responses. This allows you to write synchronous tests, avoiding the use of expectations or waits.
-The following example shows how to use this feature with Point-Free's
-[SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing) library.
+To have more control over the image loading process, use the `init(url:scale:transaction:content)` initializer, which takes a `content` closure that receives a `NetworkImageState` to indicate the state of the loading operation.
 
 ```swift
-final class MyTests: XCTestCase {
-    func testImage() {
-        let view = NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")!)
-            .scaledToFill()
-            .frame(width: 300, height: 300)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            // Stub a badServerResponse error
-            .networkImageLoader(
-                .mock(response: Fail(error: URLError(.badServerResponse) as Error))
-            )
-
-        assertSnapshot(matching: view, as: .image(layout: .device(config: .iPhoneSe)))
-    }
+NetworkImage(url: URL(string: "https://picsum.photos/id/237/300/200")) { state in
+  switch state {
+  case .empty:
+    ProgressView()
+  case .success(let image, let idealSize):
+    image
+      .resizable()
+      .scaledToFill()
+  case .failure:
+    Image(systemName: "photo.fill")
+      .imageScale(.large)
+      .blendMode(.overlay)
+  }
 }
+.frame(width: 150, height: 150)
+.background(Color.secondary.opacity(0.25))
+.clipped()
 ```
 
 ## Installation
-You can add NetworkImage to an Xcode project by adding it as a package dependency.
-1. From the **File** menu, select **Swift Packages › Add Package Dependency…**
-1. Enter `https://github.com/gonzalezreal/NetworkImage` into the package repository URL text field
-1. Link **NetworkImage** to your application target
+### Adding NetworkImage to a Swift package
 
-## Other Libraries
-* [AsyncImage](https://github.com/V8tr/AsyncImage)
+To use NetworkImage in a Swift Package Manager project, add the following line to the dependencies in your `Package.swift` file:
+
+```swift
+.package(url: "https://github.com/gonzalezreal/NetworkImage", from: "6.0.0")
+```
+
+Include `"NetworkImage"` as a dependency for your executable target:
+
+```swift
+.target(name: "<target>", dependencies: [
+  .product(name: "NetworkImage", package: "NetworkImage")
+]),
+```
+
+Finally, add `import NetworkImage` to your source code.
+
+### Adding NetworkImage to an Xcode project
+
+1. From the **File** menu, select **Add Packages…**
+1. Enter `https://github.com/gonzalezreal/NetworkImage` into the
+   *Search or Enter Package URL* search field
+1. Link **NetworkImage** to your application target

@@ -6,7 +6,7 @@ test-macos:
 test-ios:
 	xcodebuild test \
 			-scheme NetworkImage \
-			-destination platform="iOS Simulator,name=iPhone 8"
+			-destination platform="iOS Simulator,name=iPhone SE (3rd generation)"
 
 test-tvos:
 	xcodebuild test \
@@ -16,7 +16,7 @@ test-tvos:
 test-watchos:
 	xcodebuild test \
 			-scheme NetworkImage \
-			-destination platform="watchOS Simulator,name=Apple Watch Series 5 - 40mm"
+			-destination platform="watchOS Simulator,name=Apple Watch SE (40mm) (2nd generation)"
 
 test: test-macos test-ios test-tvos test-watchos
 
