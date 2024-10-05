@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 
 /// A type that temporarily stores images in memory, keyed by the URL from which they were loaded.
-public protocol NetworkImageCache: AnyObject, Sendable {
+public protocol NetworkImageCache: AnyObject {
   /// Returns the image associated with a given URL.
   func image(for url: URL) -> CGImage?
 

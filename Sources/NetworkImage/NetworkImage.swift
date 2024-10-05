@@ -79,10 +79,6 @@ public struct NetworkImage<Content>: View where Content: View {
   private let transaction: Transaction
   private let content: (NetworkImageState) -> Content
 
-  private var environment: NetworkImageModel.Environment {
-    .init(transaction: self.transaction, imageLoader: self.imageLoader)
-  }
-
   /// Loads and displays an image from the specified URL using
   /// a default placeholder until the image loads.
   ///
@@ -168,15 +164,19 @@ public struct NetworkImage<Content>: View where Content: View {
 
   public var body: some View {
     if #available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *) {
-      self.content(self.model.state.image)
-        .task(id: self.source) {
-          await self.model.onAppear(source: self.source, environment: self.environment)
+      self.content(model.image)
+        .task(id: source) {
+          model.imageLoaderChanged(imageLoader)
+          model.transactionChanged(transaction)
+          await model.sourceChanged(source)
         }
     } else {
-      self.content(self.model.state.image)
+      self.content(model.image)
         .modifier(
-          TaskModifier(id: self.source) {
-            await self.model.onAppear(source: self.source, environment: self.environment)
+          TaskModifier(id: source) { @MainActor in
+            model.imageLoaderChanged(imageLoader)
+            model.transactionChanged(transaction)
+            await model.sourceChanged(source)
           }
         )
     }
