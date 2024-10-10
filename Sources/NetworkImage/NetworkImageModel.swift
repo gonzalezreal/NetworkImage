@@ -1,6 +1,8 @@
 import SwiftUI
 
-final class NetworkImageModel: ObservableObject {
+@MainActor
+final class NetworkImageModel: ObservableObject, Sendable {
+  @MainActor
   struct Environment {
     let transaction: Transaction
     let imageLoader: NetworkImageLoader
@@ -13,7 +15,7 @@ final class NetworkImageModel: ObservableObject {
 
   @Published private(set) var state: State = .init()
 
-  @MainActor func onAppear(source: ImageSource?, environment: Environment) async {
+  func onAppear(source: ImageSource?, environment: Environment) async {
     guard source != self.state.source else { return }
 
     guard let source else {
