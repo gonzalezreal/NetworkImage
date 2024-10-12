@@ -1,6 +1,6 @@
 import Foundation
 
-struct ImageSource: Hashable {
+struct ImageSource: Hashable, Sendable {
   let url: URL
   let scale: CGFloat
 }
